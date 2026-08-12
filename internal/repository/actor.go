@@ -29,7 +29,7 @@ func NewActorRepo(db *sql.DB) *ActorRepo {
 func (r *ActorRepo) InsertActor(ctx context.Context, actor *models.Actor) error {
 
 	query := `
-        INSERT INTO Actors (name, birthDate)
+        INSERT INTO Actor (name, birthDate)
         VALUES (?, ?)
     `
 	result, err := r.db.ExecContext(ctx, query,
@@ -62,6 +62,7 @@ func (r *ActorRepo) UpdateActor(ctx context.Context, actor *models.Actor) error 
 	result, err := r.db.ExecContext(ctx, query,
 		actor.Name,
 		actor.BirthDate,
+		actor.ID,
 	)
 
 	if err != nil {
@@ -99,7 +100,7 @@ func (r *ActorRepo) DeleteActor(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (r *ActorRepo) ListActors(ctx context.Context) ([]*models.Actor, error) {
+func (r *ActorRepo) ListAllActors(ctx context.Context) ([]*models.Actor, error) {
 	query := "SELECT * FROM Actor"
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
@@ -124,10 +125,33 @@ func (r *ActorRepo) ListActors(ctx context.Context) ([]*models.Actor, error) {
 	return actors, nil
 }
 
+func (r *ActorRepo) ListOneActor(ctx context.Context, id int64) (*models.Actor, error) {
+	query := "SELECT * FROM Movie WHERE id = ?"
+	actor := &models.Actor{}
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&actor.ID, &actor.Name, &actor.BirthDate)
+	if err != nil {
+		return nil, err
+	}
+
+	return actor, nil
+}
+
 func (r *ActorRepo) CountActors(ctx context.Context) (int64, error) {
 	var count int64
 	err := r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM Actor").Scan(&count)
 	return count, err
+}
+
+func (r *ActorRepo) ActorByName(ctx context.Context, name string) (*models.Actor, error) {
+	query := "SELECT * FROM Actor WHERE name = ?"
+	actor := &models.Actor{}
+	err := r.db.QueryRowContext(ctx, query, name).Scan(&actor.ID,
+		&actor.Name,
+		&actor.BirthDate)
+	if err != nil {
+		return nil, err
+	}
+	return actor, nil
 }
 
 func isUniqueConstraintError(err error) bool {
