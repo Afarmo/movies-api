@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS Actor  (
 
 CREATE TABLE IF NOT EXISTS Movie_Genres(
 	movie_id INTEGER NOT NULL,
-	genre_id INTEGER NOT NULL
+	genre_id INTEGER NOT NULL,
 
 	PRIMARY KEY (movie_id, genre_id),
 
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS Movie_Genres(
 
 CREATE TABLE IF NOT EXISTS Movie_Actors(
 	movie_id INTEGER NOT NULL,
-	actor_id INTEGER NOT NULL
+	actor_id INTEGER NOT NULL,
 
 	PRIMARY KEY (movie_id, actor_id),
 

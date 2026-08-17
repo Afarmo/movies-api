@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"movies-api/internal/models"
 	"strings"
+	"time"
 )
 
 var (
@@ -107,16 +109,22 @@ func (r *ActorRepo) ListAllActors(ctx context.Context) ([]*models.Actor, error) 
 		return nil, err
 	}
 	var actors []*models.Actor
+	var bd string
 	for rows.Next() {
 		actor := &models.Actor{}
 		err := rows.Scan(
 			&actor.ID,
 			&actor.Name,
-			&actor.BirthDate,
+			&bd,
 		)
 		if err != nil {
 			return nil, err
 		}
+		fmt.Println(bd)
+		actor.BirthDate, _ = time.Parse("2006-01-02", bd)
+		// if err != nil {
+		// 	return nil, err
+		// }
 		actors = append(actors, actor)
 	}
 	if err := rows.Err(); err != nil {
@@ -126,9 +134,11 @@ func (r *ActorRepo) ListAllActors(ctx context.Context) ([]*models.Actor, error) 
 }
 
 func (r *ActorRepo) ListOneActor(ctx context.Context, id int64) (*models.Actor, error) {
-	query := "SELECT * FROM Movie WHERE id = ?"
+	query := "SELECT * FROM Actor WHERE id = ?"
 	actor := &models.Actor{}
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&actor.ID, &actor.Name, &actor.BirthDate)
+	var bd string
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&actor.ID, &actor.Name, &bd)
+	actor.BirthDate, _ = time.Parse("2006-01-02", bd)
 	if err != nil {
 		return nil, err
 	}
@@ -142,16 +152,33 @@ func (r *ActorRepo) CountActors(ctx context.Context) (int64, error) {
 	return count, err
 }
 
-func (r *ActorRepo) ActorByName(ctx context.Context, name string) (*models.Actor, error) {
+func (r *ActorRepo) ActorsByName(ctx context.Context, name string) ([]*models.Actor, error) {
 	query := "SELECT * FROM Actor WHERE name = ?"
-	actor := &models.Actor{}
-	err := r.db.QueryRowContext(ctx, query, name).Scan(&actor.ID,
-		&actor.Name,
-		&actor.BirthDate)
+	var bd string
+
+	rows, err := r.db.QueryContext(ctx, query, name)
 	if err != nil {
 		return nil, err
 	}
-	return actor, nil
+
+	var actors []*models.Actor
+
+	for rows.Next() {
+
+		actor := &models.Actor{}
+		err := rows.Scan(&actor.ID,
+			&actor.Name,
+			&bd)
+		actor.BirthDate, _ = time.Parse("2006-01-02", bd)
+		if err != nil {
+			return nil, err
+		}
+		actors = append(actors, actor)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return actors, nil
 }
 
 func isUniqueConstraintError(err error) bool {

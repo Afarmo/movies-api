@@ -3,18 +3,18 @@ package models
 import "time"
 
 type Genre struct {
-	ID   int
-	Name string
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 type Movie struct {
-	ID          int
-	Title       string
-	ReleaseYear int
-	Duration    int
+	ID          int    `json:"id"`
+	Title       string `json:"title"`
+	ReleaseYear int    `json:"releaseyear"`
+	Duration    int    `json:"duration"`
 }
 
 type Actor struct {
-	ID        int
-	Name      string
-	BirthDate time.Time
+	ID        int       `json:"id"`
+	Name      string    `json:"name"`
+	BirthDate time.Time `json:"birthdate"`
 }
