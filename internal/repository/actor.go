@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"movies-api/internal/models"
 	"strings"
 	"time"
@@ -12,7 +11,7 @@ import (
 
 var (
 	ErrNotFound     = errors.New("record not found")
-	ErrDuplicateId  = errors.New("duplicate key violation")
+	ErrDuplicateID  = errors.New("duplicate key violation")
 	ErrInvalidInput = errors.New("invalid input")
 )
 
@@ -35,12 +34,12 @@ func (r *ActorRepo) InsertActor(ctx context.Context, actor *models.Actor) error 
         VALUES (?, ?)
     `
 	result, err := r.db.ExecContext(ctx, query,
-		actor.Name,
-		actor.BirthDate,
+		strings.TrimSpace(actor.Name),
+		actor.BirthDate.Format("2006-01-02"),
 	)
 	if err != nil {
 		if isUniqueConstraintError(err) {
-			return ErrDuplicateId
+			return ErrDuplicateID
 		}
 		return err
 	}
@@ -69,7 +68,7 @@ func (r *ActorRepo) UpdateActor(ctx context.Context, actor *models.Actor) error 
 
 	if err != nil {
 		if isUniqueConstraintError(err) {
-			return ErrDuplicateId
+			return ErrDuplicateID
 		}
 		return err
 	}
@@ -120,11 +119,8 @@ func (r *ActorRepo) ListAllActors(ctx context.Context) ([]*models.Actor, error) 
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println(bd)
 		actor.BirthDate, _ = time.Parse("2006-01-02", bd)
-		// if err != nil {
-		// 	return nil, err
-		// }
+
 		actors = append(actors, actor)
 	}
 	if err := rows.Err(); err != nil {
@@ -156,7 +152,7 @@ func (r *ActorRepo) ActorsByName(ctx context.Context, name string) ([]*models.Ac
 	query := "SELECT * FROM Actor WHERE name = ?"
 	var bd string
 
-	rows, err := r.db.QueryContext(ctx, query, name)
+	rows, err := r.db.QueryContext(ctx, query, strings.TrimSpace(name))
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +178,6 @@ func (r *ActorRepo) ActorsByName(ctx context.Context, name string) ([]*models.Ac
 }
 
 func isUniqueConstraintError(err error) bool {
-
 	// SQLite error message contains "UNIQUE constraint failed"
 	return err != nil && (strings.Contains(err.Error(), "UNIQUE constraint failed") ||
 		strings.Contains(err.Error(), "unique constraint"))

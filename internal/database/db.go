@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS Movie (
 	duration INTEGER NOT NULL
 	);
 
-CREATE TABLE IF NOT EXISTS Actor  (
+CREATE TABLE IF NOT EXISTS Actor   (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
+    name TEXT NOT NULL Unique ,
     birthDate TEXT NOT NULL
     
 );
@@ -43,11 +43,6 @@ CREATE TABLE IF NOT EXISTS Movie_Actors(
 ); 
 `
 
-func InitializeQuery(db *sql.DB) error {
-	_, err := db.Exec(Query)
-	return err
-}
-
 func NewDataBase(dbName string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", dbName)
 	if err != nil {
@@ -57,4 +52,9 @@ func NewDataBase(dbName string) (*sql.DB, error) {
 		return nil, err
 	}
 	return db, nil
+}
+
+func InitializeQuery(db *sql.DB) error {
+	_, err := db.Exec(Query)
+	return err
 }

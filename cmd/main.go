@@ -21,14 +21,13 @@ func main() {
 		log.Fatal(err)
 	}
 	bd, _ := time.Parse("2006-01-02", "1964-09-02")
-	actor := &models.Actor{Name: "keanau",
-		BirthDate: bd}
+	actor := &models.Actor{BirthDate: bd}
 	r := repository.NewActorRepo(db)
 
 	ctx := context.Background()
-	er := r.InsertActor(ctx, actor)
-	if er != nil {
-		fmt.Println(er)
+	err = r.InsertActor(ctx, actor)
+	if err != nil {
+		fmt.Println(err)
 	}
 
 	actors, e := r.ListAllActors(ctx)
@@ -40,8 +39,11 @@ func main() {
 		fmt.Println(a)
 	}
 	fmt.Println("********************************")
-	fmt.Println(r.ListOneActor(ctx, 1000))
+	fmt.Println(r.ListOneActor(ctx, 1))
 	fmt.Println("************************")
-	fmt.Println(r.ActorsByName(ctx, "keanau"))
+	actorz, _ := r.ActorsByName(ctx, "  keanau")
+	for _, a := range actorz {
+		fmt.Println(a.ID, a.Name, a.BirthDate.Format("2006-01-02"))
+	}
 
 }

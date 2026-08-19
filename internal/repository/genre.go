@@ -21,7 +21,7 @@ func (r *GenreRepo) InsertGenre(ctx context.Context, genre *models.Genre) error 
 
 	if err != nil {
 		if isUniqueConstraintError(err) {
-			return ErrDuplicateId
+			return ErrDuplicateID
 		}
 		return err
 	}

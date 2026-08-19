@@ -23,7 +23,7 @@ func (r *MovieRepo) InsertMovie(ctx context.Context, movie *models.Movie) error 
 	result, err := r.db.ExecContext(ctx, query, movie.Title, movie.ReleaseYear, movie.Duration)
 	if err != nil {
 		if isUniqueConstraintError(err) {
-			return ErrDuplicateId
+			return ErrDuplicateID
 		}
 		return err
 	}
@@ -47,7 +47,7 @@ func (r *MovieRepo) UpdateMovie(ctx context.Context, movie *models.Movie) error 
 
 	if err != nil {
 		if isUniqueConstraintError(err) {
-			return ErrDuplicateId
+			return ErrDuplicateID
 		}
 		return err
 	}
