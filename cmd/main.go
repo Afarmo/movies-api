@@ -21,7 +21,9 @@ func main() {
 		log.Fatal(err)
 	}
 	bd, _ := time.Parse("2006-01-02", "1964-09-02")
-	actor := &models.Actor{BirthDate: bd}
+	actor := &models.Actor{Name: "LE",
+
+		BirthDate: bd}
 	r := repository.NewActorRepo(db)
 
 	ctx := context.Background()

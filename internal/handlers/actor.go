@@ -115,7 +115,7 @@ func (h *ActorHandler) UpdateActor(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	idString := req.PathValue("id")
 
-	id, err := strconv.ParseInt(idString, 10, 24)
+	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid id", http.StatusBadRequest)
 		return
@@ -139,4 +139,27 @@ func (h *ActorHandler) UpdateActor(w http.ResponseWriter, req *http.Request) {
 	}
 	w.WriteHeader(http.StatusAccepted)
 
+}
+
+///api/movies/{movieId}/actors
+
+func (h *ActorHandler) ActorsByMovieHandler(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	idString := req.PathValue("movieId")
+	movieid, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid id", http.StatusBadRequest)
+		return
+	}
+	actors, err := h.actorService.ActorsByMovie(ctx, movieid)
+	if err != nil {
+		if strings.Contains(err.Error(), sql.ErrNoRows.Error()) {
+			http.Error(w, "No Actor Found :", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(actors)
 }

@@ -177,6 +177,34 @@ func (r *ActorRepo) ActorsByName(ctx context.Context, name string) ([]*models.Ac
 	return actors, nil
 }
 
+func (r *ActorRepo) ActorsByMovie(ctx context.Context, movieId int64) ([]*models.Actor, error) {
+	query := ` SELECT a.id, a.name, a.birthDate FROM ACTOR a 
+			   JOIN movie_actors ma ON a.id = ma.movie_id
+       		    WHERE ma.movie_id = ? 
+	`
+	rows, err := r.db.QueryContext(ctx, query, movieId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var actors []*models.Actor
+	for rows.Next() {
+		actor := &models.Actor{}
+		err := rows.Scan(&actor.ID,
+			&actor.Name,
+			&actor.BirthDate)
+		if err != nil {
+			return nil, err
+		}
+		actors = append(actors, actor)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return actors, nil
+
+}
+
 func isUniqueConstraintError(err error) bool {
 	// SQLite error message contains "UNIQUE constraint failed"
 	return err != nil && (strings.Contains(err.Error(), "UNIQUE constraint failed") ||

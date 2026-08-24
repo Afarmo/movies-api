@@ -38,3 +38,6 @@ func (s *ActorService) CountActors(ctx context.Context) (int64, error) {
 func (s *ActorService) ActorsByName(ctx context.Context, name string) ([]*models.Actor, error) {
 	return s.repo.ActorsByName(ctx, name)
 }
+func (s *ActorService) ActorsByMovie(ctx context.Context, movieId int64) ([]*models.Actor, error) {
+	return s.repo.ActorsByMovie(ctx, movieId)
+}

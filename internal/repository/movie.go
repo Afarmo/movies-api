@@ -121,7 +121,94 @@ func (r *MovieRepo) ListAllMovies(ctx context.Context) ([]*models.Movie, error) 
 
 }
 
-func (r *ActorRepo) MovieByName(ctx context.Context, name string) (*models.Movie, error) {
+func (r *MovieRepo) MovieByRealeaseYear(ctx context.Context, year string) ([]*models.Movie, error) {
+	query := "SELECT * FROM Movie WHERE releaseYear = ? "
+	rows, err := r.db.QueryContext(ctx, query, year)
+	if err != nil {
+		return nil, err
+	}
+	var movies []*models.Movie
+	for rows.Next() {
+		movie := &models.Movie{}
+		err := rows.Scan(&movie.ID,
+			&movie.Title,
+			&movie.ReleaseYear,
+			&movie.Duration)
+		if err != nil {
+			return nil, err
+		}
+		movies = append(movies, movie)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return movies, nil
+}
+func (r *MovieRepo) MoviesByGenre(ctx context.Context, genreId int64) ([]*models.Movie, error) {
+	query := `
+        SELECT m.id, m.title, m.releaseYear, m.duration
+        FROM Movie m
+        JOIN Movie_Genres mg ON m.id = mg.movie_id
+        WHERE mg.genre_id = ?
+    `
+	rows, err := r.db.QueryContext(ctx, query, genreId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var movies []*models.Movie
+	for rows.Next() {
+		movie := &models.Movie{}
+		err := rows.Scan(&movie.ID,
+			&movie.Title,
+			&movie.ReleaseYear,
+			&movie.Duration)
+		if err != nil {
+			return nil, err
+		}
+		movies = append(movies, movie)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return movies, nil
+
+}
+
+func (r *MovieRepo) MoviesByActor(ctx context.Context, actorId int64) ([]*models.Movie, error) {
+	query := `
+        SELECT m.id, m.title, m.releaseYear, m.duration
+        FROM Movie m
+        JOIN Movie_Actors ma ON m.id = ma.movie_id
+        WHERE ma.actor_id = ?
+    `
+	rows, err := r.db.QueryContext(ctx, query, actorId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var movies []*models.Movie
+	for rows.Next() {
+		movie := &models.Movie{}
+		err := rows.Scan(&movie.ID,
+			&movie.Title,
+			&movie.ReleaseYear,
+			&movie.Duration)
+		if err != nil {
+			return nil, err
+		}
+		movies = append(movies, movie)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return movies, nil
+
+}
+func (r *MovieRepo) MovieByName(ctx context.Context, name string) (*models.Movie, error) {
 	query := "SELECT * FROM Movie WHERE name = ?"
 	movie := &models.Movie{}
 	err := r.db.QueryRowContext(ctx, query, name).Scan(&movie.ID,

@@ -97,3 +97,28 @@ func (r *GenreRepo) ListOneGenre(ctx context.Context, id int64) (*models.Genre, 
 	}
 	return genre, nil
 }
+
+func (r *GenreRepo) GenresByMovie(ctx context.Context, movieId int64) ([]*models.Genre, error) {
+	query := ` SELECT g.id, g.name FROM Genre g JOIN Movie_genres mg
+				ON g.id = mg.genre_id WHERE mg.movie_id = ? 
+	`
+	rows, err := r.db.QueryContext(ctx, query, movieId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var genres []*models.Genre
+	for rows.Next() {
+		genre := &models.Genre{}
+		err := rows.Scan(&genre.ID,
+			&genre.Name)
+		if err != nil {
+			return nil, err
+		}
+		genres = append(genres, genre)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return genres, nil
+}
