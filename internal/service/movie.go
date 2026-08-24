@@ -14,7 +14,7 @@ func NewMovieService(repo repository.MovieRepo) *MovieService {
 	return &MovieService{repo: repo}
 }
 
-func (s *MovieService) InsertMove(ctx context.Context, movie *models.Movie) error {
+func (s *MovieService) InsertMovie(ctx context.Context, movie *models.Movie) error {
 	return s.repo.InsertMovie(ctx, movie)
 }
 
