@@ -25,9 +25,9 @@ func main() {
 	GenreRepo := repository.NewGenreRepo(db)
 	MovieRepo := repository.NewMovieRepo(db)
 
-	ActorService := service.NewActorService(*ActorRepo)
-	GenreService := service.NewGenreService(*GenreRepo)
-	MovieService := service.NewMovieService(*MovieRepo)
+	ActorService := service.NewActorService(ActorRepo)
+	GenreService := service.NewGenreService(GenreRepo)
+	MovieService := service.NewMovieService(MovieRepo)
 
 	ActorHandler := handlers.NewActorHandler(ActorService)
 	GenreHandler := handlers.NewGenreHandler(GenreService)

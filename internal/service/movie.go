@@ -7,10 +7,10 @@ import (
 )
 
 type MovieService struct {
-	repo repository.MovieRepo
+	repo *repository.MovieRepo
 }
 
-func NewMovieService(repo repository.MovieRepo) *MovieService {
+func NewMovieService(repo *repository.MovieRepo) *MovieService {
 	return &MovieService{repo: repo}
 }
 

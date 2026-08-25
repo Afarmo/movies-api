@@ -7,10 +7,10 @@ import (
 )
 
 type ActorService struct {
-	repo repository.ActorRepo
+	repo *repository.ActorRepo
 }
 
-func NewActorService(repo repository.ActorRepo) *ActorService {
+func NewActorService(repo *repository.ActorRepo) *ActorService {
 	return &ActorService{repo: repo}
 }
 
