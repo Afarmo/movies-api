@@ -2,12 +2,13 @@ package main
 
 import (
 	"log"
+	"net/http"
+
 	"movies-api/internal/database"
 	"movies-api/internal/handlers"
 	"movies-api/internal/repository"
 	"movies-api/internal/router"
 	"movies-api/internal/service"
-	"net/http"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -17,6 +18,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.Close()
+
 	if err := database.InitializeQuery(db); err != nil {
 		log.Fatal(err)
 	}
