@@ -121,7 +121,7 @@ func (r *MovieRepo) ListAllMovies(ctx context.Context) ([]*models.Movie, error) 
 
 }
 
-func (r *ActorRepo) MovieByName(ctx context.Context, name string) (*models.Movie, error) {
+func (r *MovieRepo) MovieByName(ctx context.Context, name string) (*models.Movie, error) {
 	query := "SELECT * FROM Movie WHERE name = ?"
 	movie := &models.Movie{}
 	err := r.db.QueryRowContext(ctx, query, name).Scan(&movie.ID,
