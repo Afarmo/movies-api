@@ -21,21 +21,21 @@ func main() {
 		log.Fatal(err)
 	}
 
-	ActorRepo := repository.NewActorRepo(db)
-	GenreRepo := repository.NewGenreRepo(db)
-	MovieRepo := repository.NewMovieRepo(db)
+	actorRepo := repository.NewActorRepo(db)
+	genreRepo := repository.NewGenreRepo(db)
+	movieRepo := repository.NewMovieRepo(db)
 
-	ActorService := service.NewActorService(ActorRepo)
-	GenreService := service.NewGenreService(GenreRepo)
-	MovieService := service.NewMovieService(MovieRepo)
+	actorService := service.NewActorService(actorRepo)
+	genreService := service.NewGenreService(genreRepo)
+	movieService := service.NewMovieService(movieRepo)
 
-	ActorHandler := handlers.NewActorHandler(ActorService)
-	GenreHandler := handlers.NewGenreHandler(GenreService)
-	MovieHandler := handlers.NewMovieHandler(MovieService)
+	actorHandler := handlers.NewActorHandler(actorService)
+	genreHandler := handlers.NewGenreHandler(genreService)
+	movieHandler := handlers.NewMovieHandler(movieService)
 
-	router := router.NewRouter(ActorHandler,
-		GenreHandler,
-		MovieHandler,
+	router := router.NewRouter(actorHandler,
+		genreHandler,
+		movieHandler,
 	)
 
 	log.Println("\033[32mListening on http://localhost:8080\033[0m")
