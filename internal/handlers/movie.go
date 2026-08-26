@@ -100,3 +100,15 @@ func (h *MovieHandler) UpdateMovieHandler(w http.ResponseWriter, req *http.Reque
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func (h *MovieHandler) SearchMoviesHandler(w http.ResponseWriter, req *http.Request) {
+	title := req.URL.Query().Get("title")
+
+	movies, err := h.movieService.SearchMovies(req.Context(), title)
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(movies)
+}

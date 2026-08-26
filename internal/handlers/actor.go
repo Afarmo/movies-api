@@ -62,7 +62,7 @@ func (h *ActorHandler) CreateActorHandler(w http.ResponseWriter, req *http.Reque
 	json.NewEncoder(w).Encode(actor)
 }
 
-func (h *ActorHandler) DeleteActor(w http.ResponseWriter, req *http.Request) {
+func (h *ActorHandler) DeleteActorHandler(w http.ResponseWriter, req *http.Request) {
 	actorID, err := strconv.ParseInt(req.PathValue("id"), 10, 64)
 	if err != nil {
 		http.Error(w, "invalid actor id", http.StatusBadRequest)
@@ -77,7 +77,7 @@ func (h *ActorHandler) DeleteActor(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *ActorHandler) UpdateActor(w http.ResponseWriter, req *http.Request) {
+func (h *ActorHandler) UpdateActorHandler(w http.ResponseWriter, req *http.Request) {
 	actorID, err := strconv.ParseInt(req.PathValue("id"), 10, 64)
 	if err != nil {
 		http.Error(w, "invalid actor id", http.StatusBadRequest)
@@ -103,7 +103,7 @@ func (h *ActorHandler) UpdateActor(w http.ResponseWriter, req *http.Request) {
 func (h *ActorHandler) SearchActorsHandler(w http.ResponseWriter, req *http.Request) {
 	name := req.URL.Query().Get("name")
 
-	actors, err := h.actorService.ActorsByName(req.Context(), name)
+	actors, err := h.actorService.SearchActors(req.Context(), name)
 	if err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
