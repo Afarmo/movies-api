@@ -29,7 +29,7 @@ func (h *GenreHandler) GetOneGenreHandler(w http.ResponseWriter, req *http.Reque
 	if err != nil {
 		return // TODO
 	}
-	w.Header().Set("Content-Type´", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(genre)
 }
 
@@ -57,7 +57,7 @@ func (h *GenreHandler) CreateGenreHandler(w http.ResponseWriter, req *http.Reque
 	if err != nil {
 		return // TODO
 	}
-	w.Header().Set("Conent-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(genre)
 }
