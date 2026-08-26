@@ -57,7 +57,7 @@ func (r *ActorRepo) InsertActor(ctx context.Context, actor *models.Actor) error 
 func (r *ActorRepo) UpdateActor(ctx context.Context, actor *models.Actor) error {
 	query := `
         UPDATE Actor
-        SET name = ?, birthDay = ?
+        SET name = ?, birthDate = ?
         WHERE id = ?
     `
 	result, err := r.db.ExecContext(ctx, query,
