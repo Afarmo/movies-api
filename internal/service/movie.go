@@ -34,6 +34,6 @@ func (s *MovieService) DeleteMovie(ctx context.Context, id int64) error {
 	return s.repo.DeleteMovie(ctx, id)
 }
 
-func (s *MovieService) MovieByName(ctx context.Context, name string) (*models.Movie, error) {
-	return s.repo.MovieByName(ctx, name)
+func (s *MovieService) SearchMovies(ctx context.Context, title string) ([]*models.Movie, error) {
+	return s.repo.SearchMovies(ctx, title)
 }
