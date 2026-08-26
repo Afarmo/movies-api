@@ -16,6 +16,17 @@ func NewActorHandler(actorService *service.ActorService) *ActorHandler {
 	return &ActorHandler{actorService: actorService}
 }
 
+func (h *ActorHandler) GetAllActorsHandler(w http.ResponseWriter, req *http.Request) {
+	actors, err := h.actorService.ListAllActors(req.Context())
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(actors)
+}
+
 func (h *ActorHandler) GetOneActorHandler(w http.ResponseWriter, req *http.Request) {
 	actorID, err := strconv.ParseInt(req.PathValue("id"), 10, 64)
 	if err != nil {
@@ -31,17 +42,6 @@ func (h *ActorHandler) GetOneActorHandler(w http.ResponseWriter, req *http.Reque
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(actor)
-}
-
-func (h *ActorHandler) GetAllActorsHandler(w http.ResponseWriter, req *http.Request) {
-	actors, err := h.actorService.ListAllActors(req.Context())
-	if err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(actors)
 }
 
 func (h *ActorHandler) CreateActorHandler(w http.ResponseWriter, req *http.Request) {
@@ -60,19 +60,6 @@ func (h *ActorHandler) CreateActorHandler(w http.ResponseWriter, req *http.Reque
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(actor)
-}
-
-func (h *ActorHandler) GetActorByNameHandler(w http.ResponseWriter, req *http.Request) {
-	name := req.URL.Query().Get("name")
-
-	actors, err := h.actorService.ActorsByName(req.Context(), name)
-	if err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(actors)
 }
 
 func (h *ActorHandler) DeleteActor(w http.ResponseWriter, req *http.Request) {
@@ -111,4 +98,17 @@ func (h *ActorHandler) UpdateActor(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *ActorHandler) SearchActorsHandler(w http.ResponseWriter, req *http.Request) {
+	name := req.URL.Query().Get("name")
+
+	actors, err := h.actorService.ActorsByName(req.Context(), name)
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(actors)
 }
