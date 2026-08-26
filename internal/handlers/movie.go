@@ -34,7 +34,7 @@ func (h *MovieHandler) GetOneMovieHandler(w http.ResponseWriter, req *http.Reque
 	json.NewEncoder(w).Encode(movie)
 }
 
-func (h *MovieHandler) GetAllMoviesHAndler(w http.ResponseWriter, req *http.Request) {
+func (h *MovieHandler) GetAllMoviesHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	movies, err := h.movieService.ListAllMovies(ctx)
 	if err != nil {
