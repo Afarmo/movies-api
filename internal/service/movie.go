@@ -18,8 +18,8 @@ func (s *MovieService) InsertMovie(ctx context.Context, movie *models.Movie) err
 	return s.repo.InsertMovie(ctx, movie)
 }
 
-func (s *MovieService) UpdateMovie(ctx context.Context, movie *models.Movie) error {
-	return s.repo.UpdateMovie(ctx, movie)
+func (s *MovieService) UpdateMovie(ctx context.Context, id int64, movie *models.MoivePatch) error {
+	return s.repo.UpdateMovie(ctx, id, movie)
 }
 
 func (s *MovieService) DeleteMovie(ctx context.Context, id int64) error {
@@ -32,6 +32,6 @@ func (s *MovieService) ListOneMovie(ctx context.Context, id int64) (*models.Movi
 	return s.repo.ListOneMovie(ctx, id)
 }
 
-func (s *MovieService) MovieByName(ctx context.Context, name string) (*models.Movie, error) {
-	return s.repo.MovieByName(ctx, name)
+func (s *MovieService) MovieByName(ctx context.Context, name string) ([]*models.Movie, error) {
+	return s.repo.MovieByTitle(ctx, name)
 }

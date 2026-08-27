@@ -18,8 +18,8 @@ func (s *ActorService) InsertActor(ctx context.Context, actor *models.Actor) err
 	return s.repo.InsertActor(ctx, actor)
 }
 
-func (s *ActorService) UpdateActor(ctx context.Context, actor *models.Actor) error {
-	return s.repo.UpdateActor(ctx, actor)
+func (s *ActorService) UpdateActor(ctx context.Context, id int64, actor *models.ActorPatch) error {
+	return s.repo.UpdateActor(ctx, id, actor)
 }
 
 func (s *ActorService) DeleteActor(ctx context.Context, id int64) error {

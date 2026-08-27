@@ -54,17 +54,23 @@ func (r *ActorRepo) InsertActor(ctx context.Context, actor *models.Actor) error 
 }
 
 // Update an Actor
-func (r *ActorRepo) UpdateActor(ctx context.Context, actor *models.Actor) error {
-	query := `
-        UPDATE Actor
-        SET name = ?, birthDate = ?
-        WHERE id = ?
-    `
-	result, err := r.db.ExecContext(ctx, query,
-		actor.Name,
-		actor.BirthDate,
-		actor.ID,
-	)
+func (r *ActorRepo) UpdateActor(ctx context.Context, id int64, actor *models.ActorPatch) error {
+	query := "Update Actor SET"
+	args := []any{}
+
+	if actor.Name != nil {
+		query += "name = ?, "
+		args = append(args, actor.Name)
+	}
+	if actor.BirthDate != nil {
+		query += "birthdate = ?, "
+		args = append(args, actor.BirthDate)
+	}
+
+	query = strings.TrimSuffix(query, ", ")
+	query += " WHERE id = ?"
+	args = append(args, id)
+	result, err := r.db.ExecContext(ctx, query, args...)
 
 	if err != nil {
 		if isUniqueConstraintError(err) {
@@ -102,7 +108,7 @@ func (r *ActorRepo) DeleteActor(ctx context.Context, id int64) error {
 }
 
 func (r *ActorRepo) ListAllActors(ctx context.Context) ([]*models.Actor, error) {
-	query := "SELECT * FROM Actor"
+	query := "SELECT id, name, birthdate FROM Actor"
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
