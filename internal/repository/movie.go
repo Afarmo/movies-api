@@ -160,7 +160,7 @@ func (r *MovieRepo) ListAllMovies(ctx context.Context) ([]*models.Movie, error) 
 
 }
 
-func (r *MovieRepo) SearchMovie(ctx context.Context, name string) ([]*models.Movie, error) {
+func (r *MovieRepo) SearchMovies(ctx context.Context, name string) ([]*models.Movie, error) {
 	query := "SELECT id, title, releaseyear, duration FROM Movie WHERE title = ?"
 	rows, err := r.db.QueryContext(ctx, query, name)
 	if err != nil {
@@ -169,7 +169,7 @@ func (r *MovieRepo) SearchMovie(ctx context.Context, name string) ([]*models.Mov
 	var movies []*models.Movie
 	for rows.Next() {
 		movie := &models.Movie{}
-		rows.Scan(&movie.ID,
+		err := rows.Scan(&movie.ID,
 			&movie.Title,
 			&movie.ReleaseYear,
 			&movie.Duration)
