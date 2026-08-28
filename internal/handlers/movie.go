@@ -85,15 +85,14 @@ func (h *MovieHandler) UpdateMovieHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	var movie models.Movie
+	var movie models.MoviePatch
 
 	if err := json.NewDecoder(req.Body).Decode(&movie); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-	movie.ID = int(movieID)
 
-	if err := h.movieService.UpdateMovie(req.Context(), &movie); err != nil {
+	if err := h.movieService.UpdateMovie(req.Context(), movieID, &movie); err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}

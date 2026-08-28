@@ -84,15 +84,14 @@ func (h *ActorHandler) UpdateActorHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	var actor models.Actor
+	var actor models.ActorPatch
 
 	if err := json.NewDecoder(req.Body).Decode(&actor); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-	actor.ID = int(actorID)
 
-	if err := h.actorService.UpdateActor(req.Context(), &actor); err != nil {
+	if err := h.actorService.UpdateActor(req.Context(), actorID, &actor); err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
