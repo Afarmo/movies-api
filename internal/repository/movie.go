@@ -61,7 +61,7 @@ func (r *MovieRepo) InsertMovie(ctx context.Context, movie *models.Movie) error 
 	return tx.Commit()
 }
 
-func (r *MovieRepo) UpdateMovie(ctx context.Context, id int64, movie *models.MoivePatch) error {
+func (r *MovieRepo) UpdateMovie(ctx context.Context, id int64, movie *models.MoviePatch) error {
 
 	query := " Update Movie SET "
 	args := []any{}
@@ -160,7 +160,7 @@ func (r *MovieRepo) ListAllMovies(ctx context.Context) ([]*models.Movie, error) 
 
 }
 
-func (r *MovieRepo) MovieByTitle(ctx context.Context, name string) ([]*models.Movie, error) {
+func (r *MovieRepo) SearchMovie(ctx context.Context, name string) ([]*models.Movie, error) {
 	query := "SELECT id, title, releaseyear, duration FROM Movie WHERE title = ?"
 	rows, err := r.db.QueryContext(ctx, query, name)
 	if err != nil {

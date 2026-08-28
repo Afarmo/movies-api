@@ -77,7 +77,7 @@ func (h *ActorHandler) GetActorByNameHandler(w http.ResponseWriter, req *http.Re
 	ctx := req.Context()
 	name := req.PathValue("name")
 
-	actors, err := h.actorService.ActorsByName(ctx, name)
+	actors, err := h.actorService.SearchActors(ctx, name)
 	if err != nil {
 		if strings.Contains(err.Error(), sql.ErrNoRows.Error()) {
 			http.Error(w, "No Actor Found With the name : "+name, http.StatusNotFound)
@@ -115,19 +115,19 @@ func (h *ActorHandler) UpdateActor(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	idString := req.PathValue("id")
 
-	id, err := strconv.ParseInt(idString, 10, 24)
+	id, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid id", http.StatusBadRequest)
 		return
 	}
-	actor := models.Actor{}
-	actor.ID = int(id)
+	actor := models.ActorPatch{}
+	//actor.ID = int(id)
 	err = json.NewDecoder(req.Body).Decode(&actor)
 	if err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-	err = h.actorService.UpdateActor(ctx, &actor)
+	err = h.actorService.UpdateActor(ctx, id, &actor)
 	if err != nil {
 		if strings.Contains(err.Error(), sql.ErrNoRows.Error()) {
 			http.Error(w, "NO such Actor", http.StatusNotFound)

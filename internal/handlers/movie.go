@@ -87,14 +87,14 @@ func (h *MovieHandler) UpdateMovieHandler(w http.ResponseWriter, req *http.Reque
 		http.Error(w, "Invalid id", http.StatusBadRequest)
 		return
 	}
-	movie := models.Movie{}
-	movie.ID = int(id)
+	movie := models.MoviePatch{}
+	//movie.ID = int(id)
 	err = json.NewDecoder(req.Body).Decode(&movie)
 	if err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-	err = h.movieService.UpdateMovie(ctx, &movie)
+	err = h.movieService.UpdateMovie(ctx, id, &movie)
 	if err != nil {
 		if strings.Contains(err.Error(), sql.ErrNoRows.Error()) {
 			http.Error(w, "No such movie", http.StatusBadRequest)
@@ -109,7 +109,7 @@ func (h *MovieHandler) UpdateMovieHandler(w http.ResponseWriter, req *http.Reque
 func (h *MovieHandler) GetMovieByNameHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	name := req.PathValue("name")
-	movie, err := h.movieService.MovieByName(ctx, name)
+	movie, err := h.movieService.SearchMovie(ctx, name)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

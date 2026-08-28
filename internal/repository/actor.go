@@ -154,7 +154,7 @@ func (r *ActorRepo) CountActors(ctx context.Context) (int64, error) {
 	return count, err
 }
 
-func (r *ActorRepo) ActorsByName(ctx context.Context, name string) ([]*models.Actor, error) {
+func (r *ActorRepo) SearchActors(ctx context.Context, name string) ([]*models.Actor, error) {
 	query := "SELECT * FROM Actor WHERE name = ?"
 	var bd string
 

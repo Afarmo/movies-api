@@ -21,15 +21,13 @@ type Actor struct {
 	BirthDate time.Time `json:"birthdate"`
 }
 
-type MoivePatch struct {
-	ID          *int    `json:"id"`
+type MoviePatch struct {
 	Title       *string `json:"title"`
 	ReleaseYear *int    `json:"releaseyear"`
 	Duration    *int    `json:"duration"`
 }
 
 type ActorPatch struct {
-	ID        *int       `json:"id"`
 	Name      *string    `json:"name"`
 	BirthDate *time.Time `json:"birthdate"`
 }
