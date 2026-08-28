@@ -36,11 +36,11 @@ func main() {
 	genreHandler := handlers.NewGenreHandler(genreService)
 	movieHandler := handlers.NewMovieHandler(movieService)
 
-	router := router.NewRouter(actorHandler,
+	mux := router.NewRouter(actorHandler,
 		genreHandler,
 		movieHandler,
 	)
 
 	log.Println("\033[32mListening on http://localhost:8080\033[0m")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }
