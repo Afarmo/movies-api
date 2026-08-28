@@ -12,25 +12,25 @@ func NewRouter(actorHandler *handlers.ActorHandler,
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /api/actor/{id}", actorHandler.GetOneActorHandler)
-	mux.HandleFunc("GET /api/actor", actorHandler.GetAllActorsHandler)
-	mux.HandleFunc("POST /api/actor", actorHandler.CreateActorHandler)
-	// mux.HandleFunc("GET /api/actor?name={name}", actorHandler.GetActorByNameHandler)
-	mux.HandleFunc("DELETE /api/actor/{id}", actorHandler.DeleteActor)
-	mux.HandleFunc("PATCH /api/actor/{id}", actorHandler.UpdateActor)
+	mux.HandleFunc("GET /api/actors", actorHandler.GetAllActorsHandler)
+	mux.HandleFunc("GET /api/actors/search", actorHandler.SearchActorsHandler)
+	mux.HandleFunc("GET /api/actors/{id}", actorHandler.GetOneActorHandler)
+	mux.HandleFunc("POST /api/actors", actorHandler.CreateActorHandler)
+	mux.HandleFunc("DELETE /api/actors/{id}", actorHandler.DeleteActorHandler)
+	mux.HandleFunc("PATCH /api/actors/{id}", actorHandler.UpdateActorHandler)
 
-	mux.HandleFunc("GET /api/genre/{id}", genreHandler.GetOneGenreHandler)
-	mux.HandleFunc("GET /api/genre", genreHandler.GetAllGenresHandler)
-	mux.HandleFunc("POST /api/genre", genreHandler.CreateGenreHandler)
-	mux.HandleFunc("DELETE /api/genre/{id}", genreHandler.DeleteGenreHandler)
-	mux.HandleFunc("PATCH /api/genre/{id}", genreHandler.UpdateGenreHandler)
+	mux.HandleFunc("GET /api/genres", genreHandler.GetAllGenresHandler)
+	mux.HandleFunc("GET /api/genres/{id}", genreHandler.GetOneGenreHandler)
+	mux.HandleFunc("POST /api/genres", genreHandler.CreateGenreHandler)
+	mux.HandleFunc("DELETE /api/genres/{id}", genreHandler.DeleteGenreHandler)
+	mux.HandleFunc("PATCH /api/genres/{id}", genreHandler.UpdateGenreHandler)
 
-	mux.HandleFunc("GET /api/movie/{id}", movieHandler.GetOneMovieHandler)
-	mux.HandleFunc("GET /api/movie", movieHandler.GetAllMoviesHAndler)
-	mux.HandleFunc("POST /api/movie", movieHandler.CreateMovieHandler)
-	mux.HandleFunc("DELETE /api/movie/{id}", movieHandler.DeleteMovieHandler)
-	mux.HandleFunc("PATCH /api/movie/{id}", movieHandler.UpdateMovieHandler)
-	// mux.HandleFunc("GET /api/movie/{name}", movieHandler.GetMovieByNameHandler)
+	mux.HandleFunc("GET /api/movies", movieHandler.GetAllMoviesHandler)
+	mux.HandleFunc("GET /api/movies/search", movieHandler.SearchMoviesHandler)
+	mux.HandleFunc("GET /api/movies/{id}", movieHandler.GetOneMovieHandler)
+	mux.HandleFunc("POST /api/movies", movieHandler.CreateMovieHandler)
+	mux.HandleFunc("DELETE /api/movies/{id}", movieHandler.DeleteMovieHandler)
+	mux.HandleFunc("PATCH /api/movies/{id}", movieHandler.UpdateMovieHandler)
 
 	return mux
 }

@@ -16,86 +16,86 @@ func NewGenreHandler(genreService *service.GenreService) *GenreHandler {
 	return &GenreHandler{genreService: genreService}
 }
 
-func (h *GenreHandler) GetOneGenreHandler(w http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-
-	idString := req.PathValue("id")
-	id, err := strconv.ParseInt(idString, 10, 64)
-	if err != nil {
-		return // TODO
-	}
-
-	genre, err := h.genreService.ListOneGenre(ctx, id)
-	if err != nil {
-		return // TODO
-	}
-	w.Header().Set("Content-Type´", "application/json")
-	json.NewEncoder(w).Encode(genre)
-}
-
 func (h *GenreHandler) GetAllGenresHandler(w http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-
-	genres, err := h.genreService.ListAllGenres(ctx)
+	genres, err := h.genreService.ListAllGenres(req.Context())
 	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(genres)
 }
 
+func (h *GenreHandler) GetOneGenreHandler(w http.ResponseWriter, req *http.Request) {
+	genreID, err := strconv.ParseInt(req.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid genre id", http.StatusBadRequest)
+		return
+	}
+
+	genre, err := h.genreService.ListOneGenre(req.Context(), genreID)
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(genre)
+}
+
 func (h *GenreHandler) CreateGenreHandler(w http.ResponseWriter, req *http.Request) {
+	var genre models.Genre
 
-	genre := models.Genre{}
-	err := json.NewDecoder(req.Body).Decode(&genre)
-	if err != nil {
-		return // TODO
+	if err := json.NewDecoder(req.Body).Decode(&genre); err != nil {
+		http.Error(w, "invalid json", http.StatusBadRequest)
+		return
 	}
 
-	ctx := req.Context()
-	err = h.genreService.InsertGenre(ctx, &genre)
-	if err != nil {
-		return // TODO
+	if err := h.genreService.InsertGenre(req.Context(), &genre); err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
 	}
-	w.Header().Set("Conent-Type", "application/json")
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(genre)
 }
 
 func (h *GenreHandler) DeleteGenreHandler(w http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-
-	idString := req.PathValue("id")
-
-	id, err := strconv.ParseInt(idString, 10, 64)
+	genreID, err := strconv.ParseInt(req.PathValue("id"), 10, 64)
 	if err != nil {
-		return // TODO
+		http.Error(w, "invalid genre id", http.StatusBadRequest)
+		return
 	}
-	err = h.genreService.DeleteGenre(ctx, id)
-	if err != nil {
-		return // TODO
+
+	if err := h.genreService.DeleteGenre(req.Context(), genreID); err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
 	}
-	w.WriteHeader(http.StatusAccepted)
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *GenreHandler) UpdateGenreHandler(w http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	idString := req.PathValue("id")
-
-	id, err := strconv.ParseInt(idString, 10, 64)
+	genreID, err := strconv.ParseInt(req.PathValue("id"), 10, 64)
 	if err != nil {
-		return // TODO
+		http.Error(w, "invalid genre id", http.StatusBadRequest)
+		return
 	}
 
-	genre := models.Genre{}
-	genre.ID = int(id)
-	err = json.NewDecoder(req.Body).Decode(&genre)
-	if err != nil {
-		return // TOOD
+	var genre models.Genre
+
+	if err := json.NewDecoder(req.Body).Decode(&genre); err != nil {
+		http.Error(w, "invalid json", http.StatusBadRequest)
+		return
 	}
-	err = h.genreService.UpdateGenre(ctx, &genre)
-	if err != nil {
-		return // TODO
+	genre.ID = int(genreID)
+
+	if err := h.genreService.UpdateGenre(req.Context(), &genre); err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
 	}
-	w.WriteHeader(http.StatusAccepted)
+
+	w.WriteHeader(http.StatusOK)
 }
