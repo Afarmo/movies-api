@@ -13,16 +13,16 @@ CREATE TABLE IF NOT EXISTS Movie (
     title TEXT NOT NULL,
     releaseYear INTEGER NOT NULL,
 	duration INTEGER NOT NULL
-	);
+);
 
-CREATE TABLE IF NOT EXISTS Actor   (
+CREATE TABLE IF NOT EXISTS Actor (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL Unique ,
     birthDate TEXT NOT NULL
     
 );
 
-CREATE TABLE IF NOT EXISTS Movie_Genres(
+CREATE TABLE IF NOT EXISTS Movie_Genres (
 	movie_id INTEGER NOT NULL,
 	genre_id INTEGER NOT NULL,
 
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS Movie_Genres(
     FOREIGN KEY (genre_id) REFERENCES Genre(id)
 ); 
 
-CREATE TABLE IF NOT EXISTS Movie_Actors(
+CREATE TABLE IF NOT EXISTS Movie_Actors (
 	movie_id INTEGER NOT NULL,
 	actor_id INTEGER NOT NULL,
 
