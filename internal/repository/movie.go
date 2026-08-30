@@ -26,7 +26,7 @@ func (r *MovieRepo) InsertMovie(ctx context.Context, movie *models.Movie) error 
         INSERT INTO Movie (title, releaseYear, duration)
         VALUES (?, ?, ?)
     `
-	result, err := r.db.ExecContext(ctx, query, movie.Title, movie.ReleaseYear, movie.Duration)
+	result, err := tx.ExecContext(ctx, query, movie.Title, movie.ReleaseYear, movie.Duration)
 	if err != nil {
 		return err
 	}
@@ -66,9 +66,16 @@ func (r *MovieRepo) InsertMovie(ctx context.Context, movie *models.Movie) error 
 }
 
 func (r *MovieRepo) UpdateMovie(ctx context.Context, id int64, movie *models.MoviePatch) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
 
 	query := " Update Movie SET "
-	args := []any{}
+	var args []any
 
 	if movie.Title != nil {
 		query += "title = ?, "
@@ -88,23 +95,80 @@ func (r *MovieRepo) UpdateMovie(ctx context.Context, id int64, movie *models.Mov
 	query = strings.TrimSuffix(query, ", ")
 
 	query += " WHERE id = ?"
-	args = append(args, id)
+	if args != nil {
+		args = append(args, id)
 
-	result, err := r.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return err
+		result, err := tx.ExecContext(ctx, query, args...)
+		if err != nil {
+			return err
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+
+		if rowsAffected == 0 {
+			return ErrNotFound
+		}
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
+	if movie.AddActorIds != nil {
+		for _, actorID := range movie.AddActorIds {
+			_, err := tx.ExecContext(ctx, `
+		INSERT INTO Movie_Actors (movie_id, actor_id)
+		VALUES (?, ?)
+	`, id, actorID)
+
+			if err != nil {
+				return err
+			}
+		}
+
 	}
 
-	if rowsAffected == 0 {
-		return ErrNotFound
+	if movie.RemoveActorIds != nil {
+		for _, actorID := range movie.RemoveActorIds {
+			_, err := tx.ExecContext(ctx, `
+		DELETE FROM Movie_Actors
+		WHERE movie_id = ? AND actor_id = ?
+	`, id, actorID)
+
+			if err != nil {
+
+				return err
+			}
+		}
 	}
 
-	return nil
+	if movie.AddGenreIds != nil {
+		for _, genreID := range movie.AddGenreIds {
+			_, err := tx.ExecContext(ctx, `
+		INSERT INTO Movie_Genres (movie_id, genre_id)
+		VALUES (?, ?)
+	`, id, genreID)
+
+			if err != nil {
+
+				return err
+			}
+		}
+	}
+
+	if movie.RemoveGenreIds != nil {
+		for _, genreID := range movie.RemoveGenreIds {
+			_, err := tx.ExecContext(ctx, `
+		DELETE FROM Movie_Genres
+		WHERE movie_id = ? AND genre_id = ?
+	`, id, genreID)
+
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (r *MovieRepo) DeleteMovie(ctx context.Context, id int64) error {

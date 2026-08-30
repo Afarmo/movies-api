@@ -96,15 +96,18 @@ func (h *MovieHandler) UpdateMovieHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(&movie)
 }
 
 func (h *MovieHandler) SearchMoviesHandler(w http.ResponseWriter, req *http.Request) {
+	query := req.URL.Query()
+	title := query.Get("title")
+	genreStr := query.Get("genre")
+	yearStr := query.Get("year")
+	actorStr := query.Get("actor")
 
-	title := req.URL.Query().Get("title")
-	genreStr := req.URL.Query().Get("genre")
-	yearStr := req.URL.Query().Get("year")
-	actorStr := req.URL.Query().Get("actor")
 	var movies []*models.Movie
 	var err error
 

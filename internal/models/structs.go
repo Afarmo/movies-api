@@ -14,13 +14,6 @@ type Movie struct {
 	GenreIds    []int  `json:"genreids"`
 }
 
-type MovieResponse struct {
-	ID          int    `json:"id"`
-	Title       string `json:"title"`
-	ReleaseYear int    `json:"releaseyear"`
-	Duration    int    `json:"duration"`
-}
-
 type Actor struct {
 	ID        int    `json:"id"`
 	Name      string `json:"name"`
@@ -28,9 +21,13 @@ type Actor struct {
 }
 
 type MoviePatch struct {
-	Title       *string `json:"title"`
-	ReleaseYear *int    `json:"releaseyear"`
-	Duration    *int    `json:"duration"`
+	Title          *string `json:"title"`
+	ReleaseYear    *int    `json:"releaseyear"`
+	Duration       *int    `json:"duration"`
+	AddActorIds    []int   `json:"addActorIds"`
+	RemoveActorIds []int   `json:"removeActorIds"`
+	AddGenreIds    []int   `json:"addGenreIds"`
+	RemoveGenreIds []int   `json:"removeGenreIds"`
 }
 
 type ActorPatch struct {
