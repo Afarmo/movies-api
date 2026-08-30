@@ -5,7 +5,7 @@ import "database/sql"
 const Query = `
 CREATE TABLE IF NOT EXISTS Genre (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL
+    name TEXT NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS Movie (
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS Movie (
 
 CREATE TABLE IF NOT EXISTS Actor (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL Unique ,
+    name TEXT NOT NULL,
     birthDate TEXT NOT NULL
     
 );
