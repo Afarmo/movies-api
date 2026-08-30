@@ -41,3 +41,7 @@ func (s *ActorService) CountActors(ctx context.Context) (int64, error) {
 func (s *ActorService) SearchActors(ctx context.Context, name string) ([]*models.Actor, error) {
 	return s.repo.SearchActors(ctx, name)
 }
+
+func (s *ActorService) ActorsByMovie(ctx context.Context, id int64) ([]*models.Actor, error) {
+	return s.repo.ActorsByMovie(ctx, id)
+}
