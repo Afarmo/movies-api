@@ -15,6 +15,7 @@ func NewRouter(actorHandler *handlers.ActorHandler,
 	mux.HandleFunc("GET /api/actors", actorHandler.GetAllActorsHandler)
 	mux.HandleFunc("GET /api/actors/search", actorHandler.SearchActorsHandler)
 	mux.HandleFunc("GET /api/actors/{id}", actorHandler.GetOneActorHandler)
+	mux.HandleFunc("GET /api/movies/{movieId}/actors", actorHandler.GetActorsByMovie)
 	mux.HandleFunc("POST /api/actors", actorHandler.CreateActorHandler)
 	mux.HandleFunc("DELETE /api/actors/{id}", actorHandler.DeleteActorHandler)
 	mux.HandleFunc("PATCH /api/actors/{id}", actorHandler.UpdateActorHandler)
