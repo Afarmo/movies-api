@@ -23,18 +23,8 @@ func (h *MovieHandler) GetAllMoviesHandler(w http.ResponseWriter, req *http.Requ
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
-	var response []models.MovieResponse
-
-	for _, movie := range movies {
-		response = append(response, models.MovieResponse{
-			ID:          movie.ID,
-			Title:       movie.Title,
-			ReleaseYear: movie.ReleaseYear,
-			Duration:    movie.Duration,
-		})
-	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(movies)
 }
 
 func (h *MovieHandler) GetOneMovieHandler(w http.ResponseWriter, req *http.Request) {
@@ -43,22 +33,13 @@ func (h *MovieHandler) GetOneMovieHandler(w http.ResponseWriter, req *http.Reque
 		http.Error(w, "invalid movie id", http.StatusBadRequest)
 		return
 	}
-
 	movie, err := h.movieService.ListOneMovie(req.Context(), movieID)
 	if err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
-
-	response := models.MovieResponse{
-		ID:          movie.ID,
-		Title:       movie.Title,
-		ReleaseYear: movie.ReleaseYear,
-		Duration:    movie.Duration,
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(movie)
 }
 
 func (h *MovieHandler) CreateMovieHandler(w http.ResponseWriter, req *http.Request) {
@@ -165,16 +146,6 @@ func (h *MovieHandler) SearchMoviesHandler(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	var response []models.MovieResponse
-
-	for _, movie := range movies {
-		response = append(response, models.MovieResponse{
-			ID:          movie.ID,
-			Title:       movie.Title,
-			ReleaseYear: movie.ReleaseYear,
-			Duration:    movie.Duration,
-		})
-	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(movies)
 }
