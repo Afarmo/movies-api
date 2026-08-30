@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"movies-api/internal/models"
 	"movies-api/internal/service"
 	"net/http"
@@ -22,9 +23,18 @@ func (h *MovieHandler) GetAllMoviesHandler(w http.ResponseWriter, req *http.Requ
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
+	var response []models.MovieResponse
 
+	for _, movie := range movies {
+		response = append(response, models.MovieResponse{
+			ID:          movie.ID,
+			Title:       movie.Title,
+			ReleaseYear: movie.ReleaseYear,
+			Duration:    movie.Duration,
+		})
+	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(movies)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *MovieHandler) GetOneMovieHandler(w http.ResponseWriter, req *http.Request) {
@@ -40,8 +50,15 @@ func (h *MovieHandler) GetOneMovieHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
+	response := models.MovieResponse{
+		ID:          movie.ID,
+		Title:       movie.Title,
+		ReleaseYear: movie.ReleaseYear,
+		Duration:    movie.Duration,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(movie)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *MovieHandler) CreateMovieHandler(w http.ResponseWriter, req *http.Request) {
@@ -54,6 +71,7 @@ func (h *MovieHandler) CreateMovieHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	if err := h.movieService.InsertMovie(req.Context(), &movie); err != nil {
+		fmt.Println(movie)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -101,13 +119,62 @@ func (h *MovieHandler) UpdateMovieHandler(w http.ResponseWriter, req *http.Reque
 }
 
 func (h *MovieHandler) SearchMoviesHandler(w http.ResponseWriter, req *http.Request) {
-	title := req.URL.Query().Get("title")
 
-	movies, err := h.movieService.SearchMovies(req.Context(), title)
+	title := req.URL.Query().Get("title")
+	genreStr := req.URL.Query().Get("genre")
+	yearStr := req.URL.Query().Get("year")
+	actorStr := req.URL.Query().Get("actor")
+	var movies []*models.Movie
+	var err error
+
+	switch {
+
+	case title != "":
+		movies, err = h.movieService.SearchMovies(req.Context(), title)
+
+	case genreStr != "":
+		var genreID int64
+
+		genreID, err = strconv.ParseInt(genreStr, 10, 64)
+		if err == nil {
+			movies, err = h.movieService.MoviesByGenre(req.Context(), genreID)
+		}
+
+	case yearStr != "":
+		var releaseYear int
+
+		releaseYear, err = strconv.Atoi(yearStr)
+		if err == nil {
+			movies, err = h.movieService.MoviesByYear(req.Context(), releaseYear)
+		}
+
+	case actorStr != "":
+		var actorID int64
+
+		actorID, err = strconv.ParseInt(actorStr, 10, 64)
+		if err == nil {
+			movies, err = h.movieService.MoviesByActor(req.Context(), actorID)
+		}
+
+	default:
+		movies, err = h.movieService.ListAllMovies(req.Context())
+	}
+
 	if err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
+
+	var response []models.MovieResponse
+
+	for _, movie := range movies {
+		response = append(response, models.MovieResponse{
+			ID:          movie.ID,
+			Title:       movie.Title,
+			ReleaseYear: movie.ReleaseYear,
+			Duration:    movie.Duration,
+		})
+	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(movies)
+	json.NewEncoder(w).Encode(response)
 }

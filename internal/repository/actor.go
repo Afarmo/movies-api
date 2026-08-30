@@ -6,7 +6,6 @@ import (
 	"errors"
 	"movies-api/internal/models"
 	"strings"
-	"time"
 )
 
 var (
@@ -35,7 +34,7 @@ func (r *ActorRepo) InsertActor(ctx context.Context, actor *models.Actor) error 
     `
 	result, err := r.db.ExecContext(ctx, query,
 		strings.TrimSpace(actor.Name),
-		actor.BirthDate.Format("2006-01-02"),
+		actor.BirthDate,
 	)
 	if err != nil {
 		if isUniqueConstraintError(err) {
@@ -46,6 +45,7 @@ func (r *ActorRepo) InsertActor(ctx context.Context, actor *models.Actor) error 
 	id, err := result.LastInsertId()
 
 	if err != nil {
+
 		return err
 	}
 	actor.ID = int(id)
@@ -114,18 +114,16 @@ func (r *ActorRepo) ListAllActors(ctx context.Context) ([]*models.Actor, error) 
 		return nil, err
 	}
 	var actors []*models.Actor
-	var bd string
 	for rows.Next() {
 		actor := &models.Actor{}
 		err := rows.Scan(
 			&actor.ID,
 			&actor.Name,
-			&bd,
+			&actor.BirthDate,
 		)
 		if err != nil {
 			return nil, err
 		}
-		actor.BirthDate, _ = time.Parse("2006-01-02", bd)
 
 		actors = append(actors, actor)
 	}
@@ -138,9 +136,7 @@ func (r *ActorRepo) ListAllActors(ctx context.Context) ([]*models.Actor, error) 
 func (r *ActorRepo) ListOneActor(ctx context.Context, id int64) (*models.Actor, error) {
 	query := "SELECT * FROM Actor WHERE id = ?"
 	actor := &models.Actor{}
-	var bd string
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&actor.ID, &actor.Name, &bd)
-	actor.BirthDate, _ = time.Parse("2006-01-02", bd)
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&actor.ID, &actor.Name, &actor.BirthDate)
 	if err != nil {
 		return nil, err
 	}
@@ -155,10 +151,9 @@ func (r *ActorRepo) CountActors(ctx context.Context) (int64, error) {
 }
 
 func (r *ActorRepo) SearchActors(ctx context.Context, name string) ([]*models.Actor, error) {
-	query := "SELECT * FROM Actor WHERE name = ?"
-	var bd string
+	query := "SELECT * FROM Actor WHERE lower(name) LIKE ?"
 
-	rows, err := r.db.QueryContext(ctx, query, strings.TrimSpace(name))
+	rows, err := r.db.QueryContext(ctx, query, "%"+strings.TrimSpace(name)+"%")
 	if err != nil {
 		return nil, err
 	}
@@ -170,8 +165,7 @@ func (r *ActorRepo) SearchActors(ctx context.Context, name string) ([]*models.Ac
 		actor := &models.Actor{}
 		err := rows.Scan(&actor.ID,
 			&actor.Name,
-			&bd)
-		actor.BirthDate, _ = time.Parse("2006-01-02", bd)
+			&actor.BirthDate)
 		if err != nil {
 			return nil, err
 		}
@@ -180,6 +174,42 @@ func (r *ActorRepo) SearchActors(ctx context.Context, name string) ([]*models.Ac
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+	return actors, nil
+}
+
+func (r *ActorRepo) ActorsByMovie(ctx context.Context, movieId int64) ([]*models.Actor, error) {
+	query := `
+        SELECT a.id, a.name, a.birthDate
+        FROM Actor a
+        JOIN Movie_Actors ma ON a.id = ma.actor_id
+        WHERE ma.movie_id = ?
+    `
+	rows, err := r.db.QueryContext(ctx, query, movieId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var actors []*models.Actor
+
+	for rows.Next() {
+		actor := &models.Actor{}
+		err := rows.Scan(
+			&actor.ID,
+			&actor.Name,
+			&actor.BirthDate,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		actors = append(actors, actor)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return actors, nil
 }
 

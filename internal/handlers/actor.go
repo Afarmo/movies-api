@@ -102,7 +102,29 @@ func (h *ActorHandler) UpdateActorHandler(w http.ResponseWriter, req *http.Reque
 func (h *ActorHandler) SearchActorsHandler(w http.ResponseWriter, req *http.Request) {
 	name := req.URL.Query().Get("name")
 
-	actors, err := h.actorService.SearchActors(req.Context(), name)
+	switch {
+	case name != "":
+		actors, err := h.actorService.SearchActors(req.Context(), name)
+		if err != nil {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(actors)
+	default:
+		actors, err := h.actorService.ListAllActors(req.Context())
+		if err != nil {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(actors)
+	}
+}
+
+func (h *ActorHandler) GetActorsByMovie(w http.ResponseWriter, req *http.Request) {
+	movieId, err := strconv.ParseInt(req.PathValue("movieId"), 10, 64)
+	actors, err := h.actorService.ActorsByMovie(req.Context(), movieId)
 	if err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return

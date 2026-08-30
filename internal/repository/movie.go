@@ -26,17 +26,21 @@ func (r *MovieRepo) InsertMovie(ctx context.Context, movie *models.Movie) error 
         INSERT INTO Movie (title, releaseYear, duration)
         VALUES (?, ?, ?)
     `
-	_, err = r.db.ExecContext(ctx, query, movie.Title, movie.ReleaseYear, movie.Duration)
+	result, err := r.db.ExecContext(ctx, query, movie.Title, movie.ReleaseYear, movie.Duration)
 	if err != nil {
 		return err
 	}
-
+	movieID, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	movie.ID = int(movieID)
 	for _, actorID := range movie.ActorIds {
 		_, err = tx.ExecContext(
 			ctx,
 			`INSERT INTO Movie_Actors (movie_id, actor_id)
              VALUES (?, ?)`,
-			movie.ID,
+			movieID,
 			actorID,
 		)
 
@@ -49,7 +53,7 @@ func (r *MovieRepo) InsertMovie(ctx context.Context, movie *models.Movie) error 
 			ctx,
 			`INSERT INTO Movie_Genres (movie_id, genre_id)
              VALUES (?, ?)`,
-			movie.ID,
+			movieID,
 			genreID,
 		)
 
@@ -177,6 +181,94 @@ func (r *MovieRepo) SearchMovies(ctx context.Context, name string) ([]*models.Mo
 			return nil, err
 		}
 		movies = append(movies, movie)
+	}
+	return movies, nil
+}
+func (r *MovieRepo) MoviesByGenre(ctx context.Context, genreId int64) ([]*models.Movie, error) {
+	query := `
+        SELECT m.id, m.title, m.releaseYear, m.duration
+        FROM Movie m
+        JOIN Movie_Genres mg ON m.id = mg.movie_id
+        WHERE mg.genre_id = ?
+    `
+	rows, err := r.db.QueryContext(ctx, query, genreId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var movies []*models.Movie
+	for rows.Next() {
+		movie := &models.Movie{}
+		err := rows.Scan(&movie.ID,
+			&movie.Title,
+			&movie.ReleaseYear,
+			&movie.Duration)
+		if err != nil {
+			return nil, err
+		}
+		movies = append(movies, movie)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return movies, nil
+
+}
+
+func (r *MovieRepo) MoviesByActor(ctx context.Context, actorId int64) ([]*models.Movie, error) {
+	query := `
+        SELECT m.id, m.title, m.releaseYear, m.duration
+        FROM Movie m
+        JOIN Movie_Actors ma ON m.id = ma.movie_id
+        WHERE ma.actor_id = ?
+    `
+	rows, err := r.db.QueryContext(ctx, query, actorId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var movies []*models.Movie
+	for rows.Next() {
+		movie := &models.Movie{}
+		err := rows.Scan(&movie.ID,
+			&movie.Title,
+			&movie.ReleaseYear,
+			&movie.Duration)
+		if err != nil {
+			return nil, err
+		}
+		movies = append(movies, movie)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return movies, nil
+
+}
+
+func (r *MovieRepo) MovieByRealeaseYear(ctx context.Context, year int) ([]*models.Movie, error) {
+	query := "SELECT id, title, releaseyear, duration FROM Movie WHERE releaseYear = ? "
+	rows, err := r.db.QueryContext(ctx, query, year)
+	if err != nil {
+		return nil, err
+	}
+	var movies []*models.Movie
+	for rows.Next() {
+		movie := &models.Movie{}
+		err := rows.Scan(&movie.ID,
+			&movie.Title,
+			&movie.ReleaseYear,
+			&movie.Duration)
+		if err != nil {
+			return nil, err
+		}
+		movies = append(movies, movie)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return movies, nil
 }
