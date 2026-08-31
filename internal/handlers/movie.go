@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"movies-api/internal/models"
 	"movies-api/internal/service"
+	"movies-api/internal/validation"
 	"net/http"
 	"strconv"
 )
@@ -47,7 +48,22 @@ func (h *MovieHandler) CreateMovieHandler(w http.ResponseWriter, req *http.Reque
 
 	err := json.NewDecoder(req.Body).Decode(&movie)
 	if err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if err := validation.ValidateMovie(movie); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := validation.ValidateIDs(movie.ActorIds); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := validation.ValidateIDs(movie.GenreIds); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -79,7 +95,7 @@ func (h *MovieHandler) DeleteMovieHandler(w http.ResponseWriter, req *http.Reque
 
 func (h *MovieHandler) UpdateMovieHandler(w http.ResponseWriter, req *http.Request) {
 	movieID, err := strconv.ParseInt(req.PathValue("id"), 10, 64)
-	if err != nil {
+	if err != nil || movieID <= 0 {
 		http.Error(w, "invalid movie id", http.StatusBadRequest)
 		return
 	}
@@ -88,6 +104,29 @@ func (h *MovieHandler) UpdateMovieHandler(w http.ResponseWriter, req *http.Reque
 
 	if err := json.NewDecoder(req.Body).Decode(&movie); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
+		return
+	}
+	if err := validation.ValidateMoviePatch(movie); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := validation.ValidateIDs(movie.AddActorIds); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := validation.ValidateIDs(movie.AddGenreIds); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := validation.ValidateIDs(movie.RemoveActorIds); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := validation.ValidateIDs(movie.RemoveGenreIds); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"movies-api/internal/models"
 	"strings"
 )
@@ -90,21 +91,59 @@ func (r *ActorRepo) UpdateActor(ctx context.Context, id int64, actor *models.Act
 }
 
 // Delete an Actor from the db
-func (r *ActorRepo) DeleteActor(ctx context.Context, id int64) error {
-	query := `DELETE FROM Actor WHERE id = ?`
-
-	result, err := r.db.ExecContext(ctx, query, id)
+func (r *ActorRepo) DeleteActor(ctx context.Context, actorID int64, force bool) error {
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback()
+
+	var count int
+
+	err = tx.QueryRowContext(ctx, `
+		SELECT COUNT(*)
+		FROM Movie_Actors
+		WHERE actor_id = ?
+	`, actorID).Scan(&count)
+
+	if err != nil {
+		return err
+	}
+
+	if count > 0 && !force {
+		return fmt.Errorf("actor is associated with %d movie(s)", count)
+	}
+
+	if force {
+		_, err = tx.ExecContext(ctx, `
+			DELETE FROM Movie_Actors
+			WHERE actor_id = ?
+		`, actorID)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	result, err := tx.ExecContext(ctx, `
+		DELETE FROM Actor
+		WHERE id = ?
+	`, actorID)
+
+	if err != nil {
+		return err
+	}
+
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return err
 	}
+
 	if rowsAffected == 0 {
-		return ErrNotFound
+		return fmt.Errorf("actor not found")
 	}
-	return nil
+
+	return tx.Commit()
 }
 
 func (r *ActorRepo) ListAllActors(ctx context.Context) ([]*models.Actor, error) {
