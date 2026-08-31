@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"movies-api/internal/models"
 	"movies-api/internal/service"
+	"movies-api/internal/validation"
 	"net/http"
 	"strconv"
 )
@@ -51,6 +52,10 @@ func (h *GenreHandler) CreateGenreHandler(w http.ResponseWriter, req *http.Reque
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
+	if err := validation.ValidateGenre(genre); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	if err := h.genreService.InsertGenre(req.Context(), &genre); err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
@@ -64,7 +69,7 @@ func (h *GenreHandler) CreateGenreHandler(w http.ResponseWriter, req *http.Reque
 
 func (h *GenreHandler) DeleteGenreHandler(w http.ResponseWriter, req *http.Request) {
 	genreID, err := strconv.ParseInt(req.PathValue("id"), 10, 64)
-	if err != nil {
+	if err != nil || genreID <= 0 {
 		http.Error(w, "invalid genre id", http.StatusBadRequest)
 		return
 	}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"movies-api/internal/models"
 	"movies-api/internal/service"
+	"movies-api/internal/validation"
 	"net/http"
 	"strconv"
 	"strings"
@@ -52,7 +53,10 @@ func (h *ActorHandler) CreateActorHandler(w http.ResponseWriter, req *http.Reque
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-
+	if err := validation.ValidateActor(actor); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	if err := h.actorService.InsertActor(req.Context(), &actor); err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
