@@ -30,8 +30,8 @@ func (s *ActorService) UpdateActor(ctx context.Context, id int64, actor *models.
 	return s.repo.UpdateActor(ctx, id, actor)
 }
 
-func (s *ActorService) DeleteActor(ctx context.Context, id int64) error {
-	return s.repo.DeleteActor(ctx, id)
+func (s *ActorService) DeleteActor(ctx context.Context, id int64, force bool) error {
+	return s.repo.DeleteActor(ctx, id, force)
 }
 
 func (s *ActorService) CountActors(ctx context.Context) (int64, error) {

@@ -6,6 +6,7 @@ import (
 	"movies-api/internal/service"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type ActorHandler struct {
@@ -63,13 +64,29 @@ func (h *ActorHandler) CreateActorHandler(w http.ResponseWriter, req *http.Reque
 }
 
 func (h *ActorHandler) DeleteActorHandler(w http.ResponseWriter, req *http.Request) {
-	actorID, err := strconv.ParseInt(req.PathValue("id"), 10, 64)
+	idString := req.PathValue("id")
+
+	actorID, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
 		http.Error(w, "invalid actor id", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.actorService.DeleteActor(req.Context(), actorID); err != nil {
+	force := req.URL.Query().Get("force") == "true"
+
+	err = h.actorService.DeleteActor(req.Context(), actorID, force)
+	if err != nil {
+
+		if strings.Contains(err.Error(), "associated") {
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+
+		if strings.Contains(err.Error(), "not found") {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
