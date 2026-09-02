@@ -19,11 +19,49 @@ func NewMovieHandler(movieService *service.MovieService) *MovieHandler {
 }
 
 func (h *MovieHandler) GetAllMoviesHandler(w http.ResponseWriter, req *http.Request) {
-	movies, err := h.movieService.ListAllMovies(req.Context())
+	query := req.URL.Query()
+
+	genreStr := query.Get("genre")
+	yearStr := query.Get("year")
+	actorStr := query.Get("actor")
+
+	var movies []*models.Movie
+	var err error
+
+	switch {
+	case genreStr != "":
+		var genreID int64
+
+		genreID, err = strconv.ParseInt(genreStr, 10, 64)
+		if err == nil {
+			movies, err = h.movieService.MoviesByGenre(req.Context(), genreID)
+		}
+
+	case yearStr != "":
+		var releaseYear int
+
+		releaseYear, err = strconv.Atoi(yearStr)
+		if err == nil {
+			movies, err = h.movieService.MoviesByYear(req.Context(), releaseYear)
+		}
+
+	case actorStr != "":
+		var actorID int64
+
+		actorID, err = strconv.ParseInt(actorStr, 10, 64)
+		if err == nil {
+			movies, err = h.movieService.MoviesByActor(req.Context(), actorID)
+		}
+
+	default:
+		movies, err = h.movieService.ListAllMovies(req.Context())
+	}
+
 	if err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(movies)
 }
@@ -141,44 +179,14 @@ func (h *MovieHandler) UpdateMovieHandler(w http.ResponseWriter, req *http.Reque
 }
 
 func (h *MovieHandler) SearchMoviesHandler(w http.ResponseWriter, req *http.Request) {
-	query := req.URL.Query()
-	title := query.Get("title")
-	genreStr := query.Get("genre")
-	yearStr := query.Get("year")
-	actorStr := query.Get("actor")
+	title := req.URL.Query().Get("title")
 
 	var movies []*models.Movie
 	var err error
 
 	switch {
-
 	case title != "":
 		movies, err = h.movieService.SearchMovies(req.Context(), title)
-
-	case genreStr != "":
-		var genreID int64
-
-		genreID, err = strconv.ParseInt(genreStr, 10, 64)
-		if err == nil {
-			movies, err = h.movieService.MoviesByGenre(req.Context(), genreID)
-		}
-
-	case yearStr != "":
-		var releaseYear int
-
-		releaseYear, err = strconv.Atoi(yearStr)
-		if err == nil {
-			movies, err = h.movieService.MoviesByYear(req.Context(), releaseYear)
-		}
-
-	case actorStr != "":
-		var actorID int64
-
-		actorID, err = strconv.ParseInt(actorStr, 10, 64)
-		if err == nil {
-			movies, err = h.movieService.MoviesByActor(req.Context(), actorID)
-		}
-
 	default:
 		movies, err = h.movieService.ListAllMovies(req.Context())
 	}
