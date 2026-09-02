@@ -6,6 +6,7 @@ import (
 
 	"movies-api/internal/database"
 	"movies-api/internal/handlers"
+	"movies-api/internal/middleware"
 	"movies-api/internal/repository"
 	"movies-api/internal/router"
 	"movies-api/internal/service"
@@ -40,7 +41,10 @@ func main() {
 		genreHandler,
 		movieHandler,
 	)
+	handler := middleware.Recover(
+		middleware.Logger(mux),
+	)
 
 	log.Println("\033[32mListening on http://localhost:8080\033[0m")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	log.Fatal(http.ListenAndServe(":8080", handler))
 }
