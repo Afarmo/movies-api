@@ -2,7 +2,7 @@ package database
 
 import "database/sql"
 
-const Query = `
+const schema = `
 CREATE TABLE IF NOT EXISTS Genre (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE
@@ -62,6 +62,6 @@ func NewDataBase(dbName string) (*sql.DB, error) {
 }
 
 func InitializeQuery(db *sql.DB) error {
-	_, err := db.Exec(Query)
+	_, err := db.Exec(schema)
 	return err
 }
