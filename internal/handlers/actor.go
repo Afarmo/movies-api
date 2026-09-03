@@ -50,8 +50,10 @@ func (h *ActorHandler) GetOneActorHandler(w http.ResponseWriter, req *http.Reque
 func (h *ActorHandler) CreateActorHandler(w http.ResponseWriter, req *http.Request) {
 	var actor models.Actor
 
-	if err := json.NewDecoder(req.Body).Decode(&actor); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	decoder := json.NewDecoder(req.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&actor); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if err := validation.ValidateActor(actor); err != nil {
@@ -96,8 +98,10 @@ func (h *ActorHandler) UpdateActorHandler(w http.ResponseWriter, req *http.Reque
 
 	var actorPatch models.ActorPatch
 
-	if err := json.NewDecoder(req.Body).Decode(&actorPatch); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	decoder := json.NewDecoder(req.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&actorPatch); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 

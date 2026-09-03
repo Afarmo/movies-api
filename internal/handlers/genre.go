@@ -49,8 +49,10 @@ func (h *GenreHandler) GetOneGenreHandler(w http.ResponseWriter, req *http.Reque
 func (h *GenreHandler) CreateGenreHandler(w http.ResponseWriter, req *http.Request) {
 	var genre models.Genre
 
-	if err := json.NewDecoder(req.Body).Decode(&genre); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	decoder := json.NewDecoder(req.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&genre); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if err := validation.ValidateGenre(genre); err != nil {
@@ -92,9 +94,10 @@ func (h *GenreHandler) UpdateGenreHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	var genre models.Genre
-
-	if err := json.NewDecoder(req.Body).Decode(&genre); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	decoder := json.NewDecoder(req.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&genre); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	genre.ID = int(genreID)

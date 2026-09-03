@@ -102,9 +102,10 @@ func (h *MovieHandler) GetOneMovieHandler(w http.ResponseWriter, req *http.Reque
 func (h *MovieHandler) CreateMovieHandler(w http.ResponseWriter, req *http.Request) {
 	var movie models.Movie
 
-	err := json.NewDecoder(req.Body).Decode(&movie)
-	if err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	decoder := json.NewDecoder(req.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&movie); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -158,8 +159,10 @@ func (h *MovieHandler) UpdateMovieHandler(w http.ResponseWriter, req *http.Reque
 
 	var moviePatch models.MoviePatch
 
-	if err := json.NewDecoder(req.Body).Decode(&moviePatch); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	decoder := json.NewDecoder(req.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&moviePatch); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if err := validation.ValidateMoviePatch(moviePatch); err != nil {
