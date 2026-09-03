@@ -51,6 +51,13 @@ func NewDataBase(dbName string) (*sql.DB, error) {
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}
+
+	_, err = db.Exec("PRAGMA foreign_keys = ON")
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
+
 	return db, nil
 }
 
