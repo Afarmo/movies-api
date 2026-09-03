@@ -18,8 +18,8 @@ func (s *MovieService) InsertMovie(ctx context.Context, movie *models.Movie) err
 	return s.repo.InsertMovie(ctx, movie)
 }
 
-func (s *MovieService) ListAllMovies(ctx context.Context) ([]*models.Movie, error) {
-	return s.repo.ListAllMovies(ctx)
+func (s *MovieService) ListMovies(ctx context.Context, filter *models.MovieFilter) ([]*models.Movie, error) {
+	return s.repo.ListMovies(ctx, filter)
 }
 
 func (s *MovieService) ListOneMovie(ctx context.Context, id int64) (*models.Movie, error) {
@@ -36,15 +36,4 @@ func (s *MovieService) DeleteMovie(ctx context.Context, id int64) error {
 
 func (s *MovieService) SearchMovies(ctx context.Context, title string) ([]*models.Movie, error) {
 	return s.repo.SearchMovies(ctx, title)
-}
-
-func (s *MovieService) MoviesByGenre(ctx context.Context, genreid int64) ([]*models.Movie, error) {
-	return s.repo.MoviesByGenre(ctx, genreid)
-}
-func (s *MovieService) MoviesByActor(ctx context.Context, actorid int64) ([]*models.Movie, error) {
-	return s.repo.MoviesByActor(ctx, actorid)
-}
-
-func (s *MovieService) MoviesByYear(ctx context.Context, releaseYear int) ([]*models.Movie, error) {
-	return s.repo.MovieByRealeaseYear(ctx, releaseYear)
 }
