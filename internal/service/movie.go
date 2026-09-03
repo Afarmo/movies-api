@@ -18,7 +18,7 @@ func (s *MovieService) InsertMovie(ctx context.Context, movie *models.Movie) err
 	return s.repo.InsertMovie(ctx, movie)
 }
 
-func (s *MovieService) ListMovies(ctx context.Context, filter *models.MovieFilter) ([]*models.Movie, error) {
+func (s *MovieService) ListMovies(ctx context.Context, filter *models.MovieFilter) (*models.ListMoviesResult, error) {
 	return s.repo.ListMovies(ctx, filter)
 }
 

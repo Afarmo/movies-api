@@ -271,9 +271,8 @@ func (r *MovieRepo) ListOneMovie(ctx context.Context, id int64) (*models.Movie, 
 	return movie, nil
 }
 
-func (r *MovieRepo) ListMovies(ctx context.Context, filter *models.MovieFilter) ([]*models.Movie, error) {
-	query := `
-		SELECT DISTINCT m.id, m.title, m.releaseYear, m.duration
+func (r *MovieRepo) ListMovies(ctx context.Context, filter *models.MovieFilter) (*models.ListMoviesResult, error) {
+	baseQuery := `
 		FROM Movie m
 	`
 
@@ -281,17 +280,17 @@ func (r *MovieRepo) ListMovies(ctx context.Context, filter *models.MovieFilter) 
 	var args []any
 
 	if filter.GenreID != nil {
-		query += `
+		baseQuery += `
 		JOIN Movie_Genres mg ON m.id = mg.movie_id
-	`
+		`
 		conditions = append(conditions, "mg.genre_id = ?")
 		args = append(args, *filter.GenreID)
 	}
 
 	if filter.ActorID != nil {
-		query += `
+		baseQuery += `
 		JOIN Movie_Actors ma ON m.id = ma.movie_id
-	`
+		`
 		conditions = append(conditions, "ma.actor_id = ?")
 		args = append(args, *filter.ActorID)
 	}
@@ -302,17 +301,28 @@ func (r *MovieRepo) ListMovies(ctx context.Context, filter *models.MovieFilter) 
 	}
 
 	if len(conditions) > 0 {
-		query += " WHERE " + strings.Join(conditions, " AND ")
+		baseQuery += " WHERE " + strings.Join(conditions, " AND ")
 	}
+
+	// Count filtered movies
+	countQuery := "SELECT COUNT(DISTINCT m.id) " + baseQuery
+
+	var total int
+	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, err
+	}
+
+	query := "SELECT DISTINCT m.id, m.title, m.releaseYear, m.duration " + baseQuery
+
+	queryArgs := append([]any(nil), args...)
 
 	if filter.Page != nil && filter.Size != nil {
 		offset := *filter.Page * *filter.Size
-
 		query += " LIMIT ? OFFSET ?"
-		args = append(args, *filter.Size, offset)
+		queryArgs = append(queryArgs, *filter.Size, offset)
 	}
 
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	rows, err := r.db.QueryContext(ctx, query, queryArgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -337,12 +347,15 @@ func (r *MovieRepo) ListMovies(ctx context.Context, filter *models.MovieFilter) 
 		FROM Movie_Actors
 		WHERE movie_id = ?
 		`
+
 		actorRows, err := r.db.QueryContext(ctx, actorQuery, movie.ID)
 		if err != nil {
 			return nil, err
 		}
+
 		for actorRows.Next() {
 			var actorID int
+
 			if err := actorRows.Scan(&actorID); err != nil {
 				actorRows.Close()
 				return nil, err
@@ -355,6 +368,7 @@ func (r *MovieRepo) ListMovies(ctx context.Context, filter *models.MovieFilter) 
 			actorRows.Close()
 			return nil, err
 		}
+
 		actorRows.Close()
 
 		genreQuery := `
@@ -362,12 +376,15 @@ func (r *MovieRepo) ListMovies(ctx context.Context, filter *models.MovieFilter) 
 		FROM Movie_Genres
 		WHERE movie_id = ?
 		`
+
 		genreRows, err := r.db.QueryContext(ctx, genreQuery, movie.ID)
 		if err != nil {
 			return nil, err
 		}
+
 		for genreRows.Next() {
 			var genreID int
+
 			if err := genreRows.Scan(&genreID); err != nil {
 				genreRows.Close()
 				return nil, err
@@ -380,6 +397,7 @@ func (r *MovieRepo) ListMovies(ctx context.Context, filter *models.MovieFilter) 
 			genreRows.Close()
 			return nil, err
 		}
+
 		genreRows.Close()
 
 		movies = append(movies, movie)
@@ -389,7 +407,10 @@ func (r *MovieRepo) ListMovies(ctx context.Context, filter *models.MovieFilter) 
 		return nil, err
 	}
 
-	return movies, nil
+	return &models.ListMoviesResult{
+		Movies: movies,
+		Total:  total,
+	}, nil
 }
 
 func (r *MovieRepo) SearchMovies(ctx context.Context, name string) ([]*models.Movie, error) {

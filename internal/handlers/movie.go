@@ -22,7 +22,6 @@ func NewMovieHandler(movieService *service.MovieService) *MovieHandler {
 func (h *MovieHandler) GetAllMoviesHandler(w http.ResponseWriter, req *http.Request) {
 	query := req.URL.Query()
 
-	var movies []*models.Movie
 	var filter models.MovieFilter
 
 	if genreStr := query.Get("genre"); genreStr != "" {
@@ -57,7 +56,12 @@ func (h *MovieHandler) GetAllMoviesHandler(w http.ResponseWriter, req *http.Requ
 
 	pageStr := query.Get("page")
 	sizeStr := query.Get("size")
-	if pageStr != "" && sizeStr != "" {
+	if pageStr != "" || sizeStr != "" {
+		if pageStr == "" || sizeStr == "" {
+			http.Error(w, "page and size must be provided together", http.StatusBadRequest)
+			return
+		}
+
 		page, err := strconv.Atoi(pageStr)
 		if err != nil || page < 0 {
 			http.Error(w, "Invalid page", http.StatusBadRequest)
@@ -80,8 +84,20 @@ func (h *MovieHandler) GetAllMoviesHandler(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
+	totalPages := 0
+
+	if filter.Page != nil && filter.Size != nil {
+		totalPages = (movies.Total + *filter.Size - 1) / *filter.Size
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(movies)
+	json.NewEncoder(w).Encode(models.ListMoviesResponse{
+		Movies:     movies.Movies,
+		Page:       filter.Page,
+		Size:       filter.Size,
+		Total:      movies.Total,
+		TotalPages: totalPages,
+	})
 }
 
 func (h *MovieHandler) GetOneMovieHandler(w http.ResponseWriter, req *http.Request) {
@@ -201,16 +217,13 @@ func (h *MovieHandler) UpdateMovieHandler(w http.ResponseWriter, req *http.Reque
 }
 
 func (h *MovieHandler) SearchMoviesHandler(w http.ResponseWriter, req *http.Request) {
-
-	var movies []*models.Movie
-	var filter models.MovieFilter
-	var err error
-
-	if title := req.URL.Query().Get("title"); title != "" {
-		movies, err = h.movieService.SearchMovies(req.Context(), title)
-	} else {
-		movies, err = h.movieService.ListMovies(req.Context(), &filter)
+	title := req.URL.Query().Get("title")
+	if title == "" {
+		http.Error(w, "Title is required", http.StatusBadRequest)
+		return
 	}
+
+	movies, err := h.movieService.SearchMovies(req.Context(), title)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
