@@ -1,8 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"movies-api/internal/database"
 	"movies-api/internal/handlers"
@@ -37,14 +42,34 @@ func main() {
 	genreHandler := handlers.NewGenreHandler(genreService)
 	movieHandler := handlers.NewMovieHandler(movieService)
 
-	mux := router.NewRouter(actorHandler,
-		genreHandler,
-		movieHandler,
-	)
-	handler := middleware.Recover(
-		middleware.Logger(mux),
-	)
+	mux := router.NewRouter(actorHandler, genreHandler, movieHandler)
+	handler := middleware.Recover(middleware.Logger(mux))
 
-	log.Println("\033[32mListening on http://localhost:8080\033[0m")
-	log.Fatal(http.ListenAndServe(":8080", handler))
+	srv := &http.Server{
+		Addr:    ":8080",
+		Handler: handler,
+	}
+
+	log.Println("\033[36m  [STARTUP]\033[0m  Listening on http://localhost:8080")
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Println("\033[31m[PANIC]\033[0m Server error:", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
+
+	log.Println("\033[34m[SHUTDOWN]\033[0m Gracefully shutting down...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Println("\033[31m[PANIC]\033[0m Forced shutdown:", err)
+	}
+
+	log.Println("\033[34m  [SHUTDOWN]\033[0m Server stopped")
 }
