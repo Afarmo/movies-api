@@ -21,42 +21,59 @@ func NewMovieHandler(movieService *service.MovieService) *MovieHandler {
 func (h *MovieHandler) GetAllMoviesHandler(w http.ResponseWriter, req *http.Request) {
 	query := req.URL.Query()
 
-	genreStr := query.Get("genre")
-	yearStr := query.Get("year")
-	actorStr := query.Get("actor")
-
 	var movies []*models.Movie
-	var err error
+	var filter models.MovieFilter
 
-	switch {
-	case genreStr != "":
-		var genreID int64
-
-		genreID, err = strconv.ParseInt(genreStr, 10, 64)
-		if err == nil {
-			movies, err = h.movieService.MoviesByGenre(req.Context(), genreID)
+	if genreStr := query.Get("genre"); genreStr != "" {
+		genreID, err := strconv.ParseInt(genreStr, 10, 64)
+		if err != nil || genreID < 1 {
+			http.Error(w, "invalid genre id", http.StatusBadRequest)
+			return
 		}
 
-	case yearStr != "":
-		var releaseYear int
-
-		releaseYear, err = strconv.Atoi(yearStr)
-		if err == nil {
-			movies, err = h.movieService.MoviesByYear(req.Context(), releaseYear)
-		}
-
-	case actorStr != "":
-		var actorID int64
-
-		actorID, err = strconv.ParseInt(actorStr, 10, 64)
-		if err == nil {
-			movies, err = h.movieService.MoviesByActor(req.Context(), actorID)
-		}
-
-	default:
-		movies, err = h.movieService.ListAllMovies(req.Context())
+		filter.GenreID = &genreID
 	}
 
+	if actorStr := query.Get("actor"); actorStr != "" {
+		actorID, err := strconv.ParseInt(actorStr, 10, 64)
+		if err != nil || actorID < 1 {
+			http.Error(w, "invalid actor id", http.StatusBadRequest)
+			return
+		}
+
+		filter.ActorID = &actorID
+	}
+
+	if yearStr := query.Get("year"); yearStr != "" {
+		year, err := strconv.Atoi(yearStr)
+		if err != nil {
+			http.Error(w, "invalid release year", http.StatusBadRequest)
+			return
+		}
+
+		filter.Year = &year
+	}
+
+	pageStr := query.Get("page")
+	sizeStr := query.Get("size")
+	if pageStr != "" && sizeStr != "" {
+		page, err := strconv.Atoi(pageStr)
+		if err != nil || page < 0 {
+			http.Error(w, "invalid page", http.StatusBadRequest)
+			return
+		}
+
+		size, err := strconv.Atoi(sizeStr)
+		if err != nil || size < 1 {
+			http.Error(w, "invalid size", http.StatusBadRequest)
+			return
+		}
+
+		filter.Page = &page
+		filter.Size = &size
+	}
+
+	movies, err := h.movieService.ListMovies(req.Context(), &filter)
 	if err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
@@ -179,18 +196,16 @@ func (h *MovieHandler) UpdateMovieHandler(w http.ResponseWriter, req *http.Reque
 }
 
 func (h *MovieHandler) SearchMoviesHandler(w http.ResponseWriter, req *http.Request) {
-	title := req.URL.Query().Get("title")
 
 	var movies []*models.Movie
+	var filter models.MovieFilter
 	var err error
 
-	switch {
-	case title != "":
+	if title := req.URL.Query().Get("title"); title != "" {
 		movies, err = h.movieService.SearchMovies(req.Context(), title)
-	default:
-		movies, err = h.movieService.ListAllMovies(req.Context())
+	} else {
+		movies, err = h.movieService.ListMovies(req.Context(), &filter)
 	}
-
 	if err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return

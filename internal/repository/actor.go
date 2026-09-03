@@ -28,7 +28,6 @@ func NewActorRepo(db *sql.DB) *ActorRepo {
 // Creates and Inserts a new actor into the db
 // Returns the insterted Actor
 func (r *ActorRepo) InsertActor(ctx context.Context, actor *models.Actor) error {
-
 	query := `
         INSERT INTO Actor (name, birthDate)
         VALUES (?, ?)
@@ -87,6 +86,7 @@ func (r *ActorRepo) UpdateActor(ctx context.Context, id int64, actor *models.Act
 	if rowsAffected == 0 {
 		return ErrNotFound
 	}
+
 	return nil
 }
 
@@ -115,12 +115,10 @@ func (r *ActorRepo) DeleteActor(ctx context.Context, actorID int64, force bool) 
 	}
 
 	if force {
-		_, err = tx.ExecContext(ctx, `
+		if _, err = tx.ExecContext(ctx, `
 			DELETE FROM Movie_Actors
 			WHERE actor_id = ?
-		`, actorID)
-
-		if err != nil {
+		`, actorID); err != nil {
 			return err
 		}
 	}

@@ -261,41 +261,79 @@ func (r *MovieRepo) ListOneMovie(ctx context.Context, id int64) (*models.Movie, 
 	return movie, nil
 }
 
-func (r *MovieRepo) ListAllMovies(ctx context.Context) ([]*models.Movie, error) {
-	query := "SELECT id, title, releaseyear, duration FROM Movie"
-	rows, err := r.db.QueryContext(ctx, query)
+func (r *MovieRepo) ListMovies(ctx context.Context, filter *models.MovieFilter) ([]*models.Movie, error) {
+	query := `
+		SELECT DISTINCT m.id, m.title, m.releaseYear, m.duration
+		FROM Movie m
+	`
+
+	var conditions []string
+	var args []any
+
+	if filter.GenreID != nil {
+		query += `
+		JOIN Movie_Genres mg ON m.id = mg.movie_id
+	`
+		conditions = append(conditions, "mg.genre_id = ?")
+		args = append(args, *filter.GenreID)
+	}
+
+	if filter.ActorID != nil {
+		query += `
+		JOIN Movie_Actors ma ON m.id = ma.movie_id
+	`
+		conditions = append(conditions, "ma.actor_id = ?")
+		args = append(args, *filter.ActorID)
+	}
+
+	if filter.Year != nil {
+		conditions = append(conditions, "m.releaseYear = ?")
+		args = append(args, *filter.Year)
+	}
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	if filter.Page != nil && filter.Size != nil {
+		offset := *filter.Page * *filter.Size
+
+		query += " LIMIT ? OFFSET ?"
+		args = append(args, *filter.Size, offset)
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+
 	var movies []*models.Movie
+
 	for rows.Next() {
 		movie := &models.Movie{}
-		err := rows.Scan(
+
+		if err := rows.Scan(
 			&movie.ID,
 			&movie.Title,
 			&movie.ReleaseYear,
 			&movie.Duration,
-		)
-		if err != nil {
+		); err != nil {
 			return nil, err
 		}
-		actorQuery := `
-			SELECT actor_id
-			FROM Movie_Actors
-			WHERE movie_id = ?
-		`
 
+		actorQuery := `
+		SELECT actor_id
+		FROM Movie_Actors
+		WHERE movie_id = ?
+		`
 		actorRows, err := r.db.QueryContext(ctx, actorQuery, movie.ID)
 		if err != nil {
 			return nil, err
 		}
-
 		for actorRows.Next() {
 			var actorID int
-
-			err := actorRows.Scan(&actorID)
-			if err != nil {
+			if err := actorRows.Scan(&actorID); err != nil {
 				actorRows.Close()
 				return nil, err
 			}
@@ -307,25 +345,20 @@ func (r *MovieRepo) ListAllMovies(ctx context.Context) ([]*models.Movie, error) 
 			actorRows.Close()
 			return nil, err
 		}
-
 		actorRows.Close()
 
 		genreQuery := `
-			SELECT genre_id
-			FROM Movie_Genres
-			WHERE movie_id = ?
+		SELECT genre_id
+		FROM Movie_Genres
+		WHERE movie_id = ?
 		`
-
 		genreRows, err := r.db.QueryContext(ctx, genreQuery, movie.ID)
 		if err != nil {
 			return nil, err
 		}
-
 		for genreRows.Next() {
 			var genreID int
-
-			err := genreRows.Scan(&genreID)
-			if err != nil {
+			if err := genreRows.Scan(&genreID); err != nil {
 				genreRows.Close()
 				return nil, err
 			}
@@ -337,7 +370,6 @@ func (r *MovieRepo) ListAllMovies(ctx context.Context) ([]*models.Movie, error) 
 			genreRows.Close()
 			return nil, err
 		}
-
 		genreRows.Close()
 
 		movies = append(movies, movie)
@@ -346,8 +378,8 @@ func (r *MovieRepo) ListAllMovies(ctx context.Context) ([]*models.Movie, error) 
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	return movies, nil
 
+	return movies, nil
 }
 
 func (r *MovieRepo) SearchMovies(ctx context.Context, name string) ([]*models.Movie, error) {
@@ -428,273 +460,10 @@ func (r *MovieRepo) SearchMovies(ctx context.Context, name string) ([]*models.Mo
 
 		movies = append(movies, movie)
 	}
-	return movies, nil
-}
-func (r *MovieRepo) MoviesByGenre(ctx context.Context, genreId int64) ([]*models.Movie, error) {
-	query := `
-        SELECT m.id, m.title, m.releaseYear, m.duration
-        FROM Movie m
-        JOIN Movie_Genres mg ON m.id = mg.movie_id
-        WHERE mg.genre_id = ?
-    `
-	rows, err := r.db.QueryContext(ctx, query, genreId)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var movies []*models.Movie
-	for rows.Next() {
-		movie := &models.Movie{}
-		err := rows.Scan(&movie.ID,
-			&movie.Title,
-			&movie.ReleaseYear,
-			&movie.Duration)
-		if err != nil {
-			return nil, err
-		}
-		actorQuery := `
-			SELECT actor_id
-			FROM Movie_Actors
-			WHERE movie_id = ?
-		`
-
-		actorRows, err := r.db.QueryContext(ctx, actorQuery, movie.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		for actorRows.Next() {
-			var actorID int
-
-			err := actorRows.Scan(&actorID)
-			if err != nil {
-				actorRows.Close()
-				return nil, err
-			}
-
-			movie.ActorIds = append(movie.ActorIds, actorID)
-		}
-
-		if err := actorRows.Err(); err != nil {
-			actorRows.Close()
-			return nil, err
-		}
-
-		actorRows.Close()
-
-		genreQuery := `
-			SELECT genre_id
-			FROM Movie_Genres
-			WHERE movie_id = ?
-		`
-
-		genreRows, err := r.db.QueryContext(ctx, genreQuery, movie.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		for genreRows.Next() {
-			var genreID int
-
-			err := genreRows.Scan(&genreID)
-			if err != nil {
-				genreRows.Close()
-				return nil, err
-			}
-
-			movie.GenreIds = append(movie.GenreIds, genreID)
-		}
-
-		if err := genreRows.Err(); err != nil {
-			genreRows.Close()
-			return nil, err
-		}
-
-		genreRows.Close()
-
-		movies = append(movies, movie)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return movies, nil
-
-}
-
-func (r *MovieRepo) MoviesByActor(ctx context.Context, actorId int64) ([]*models.Movie, error) {
-	query := `
-        SELECT m.id, m.title, m.releaseYear, m.duration
-        FROM Movie m
-        JOIN Movie_Actors ma ON m.id = ma.movie_id
-        WHERE ma.actor_id = ?
-    `
-	rows, err := r.db.QueryContext(ctx, query, actorId)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var movies []*models.Movie
-	for rows.Next() {
-		movie := &models.Movie{}
-		err := rows.Scan(&movie.ID,
-			&movie.Title,
-			&movie.ReleaseYear,
-			&movie.Duration)
-		if err != nil {
-			return nil, err
-		}
-		actorQuery := `
-			SELECT actor_id
-			FROM Movie_Actors
-			WHERE movie_id = ?
-		`
-
-		actorRows, err := r.db.QueryContext(ctx, actorQuery, movie.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		for actorRows.Next() {
-			var actorID int
-
-			err := actorRows.Scan(&actorID)
-			if err != nil {
-				actorRows.Close()
-				return nil, err
-			}
-
-			movie.ActorIds = append(movie.ActorIds, actorID)
-		}
-
-		if err := actorRows.Err(); err != nil {
-			actorRows.Close()
-			return nil, err
-		}
-
-		actorRows.Close()
-
-		genreQuery := `
-			SELECT genre_id
-			FROM Movie_Genres
-			WHERE movie_id = ?
-		`
-
-		genreRows, err := r.db.QueryContext(ctx, genreQuery, movie.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		for genreRows.Next() {
-			var genreID int
-
-			err := genreRows.Scan(&genreID)
-			if err != nil {
-				genreRows.Close()
-				return nil, err
-			}
-
-			movie.GenreIds = append(movie.GenreIds, genreID)
-		}
-
-		if err := genreRows.Err(); err != nil {
-			genreRows.Close()
-			return nil, err
-		}
-
-		genreRows.Close()
-
-		movies = append(movies, movie)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return movies, nil
-
-}
-
-func (r *MovieRepo) MovieByRealeaseYear(ctx context.Context, year int) ([]*models.Movie, error) {
-	query := "SELECT id, title, releaseyear, duration FROM Movie WHERE releaseYear = ? "
-	rows, err := r.db.QueryContext(ctx, query, year)
-	if err != nil {
-		return nil, err
-	}
-	var movies []*models.Movie
-	for rows.Next() {
-		movie := &models.Movie{}
-		err := rows.Scan(&movie.ID,
-			&movie.Title,
-			&movie.ReleaseYear,
-			&movie.Duration)
-		if err != nil {
-			return nil, err
-		}
-		actorQuery := `
-			SELECT actor_id
-			FROM Movie_Actors
-			WHERE movie_id = ?
-		`
-
-		actorRows, err := r.db.QueryContext(ctx, actorQuery, movie.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		for actorRows.Next() {
-			var actorID int
-
-			err := actorRows.Scan(&actorID)
-			if err != nil {
-				actorRows.Close()
-				return nil, err
-			}
-
-			movie.ActorIds = append(movie.ActorIds, actorID)
-		}
-
-		if err := actorRows.Err(); err != nil {
-			actorRows.Close()
-			return nil, err
-		}
-
-		actorRows.Close()
-
-		genreQuery := `
-			SELECT genre_id
-			FROM Movie_Genres
-			WHERE movie_id = ?
-		`
-
-		genreRows, err := r.db.QueryContext(ctx, genreQuery, movie.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		for genreRows.Next() {
-			var genreID int
-
-			err := genreRows.Scan(&genreID)
-			if err != nil {
-				genreRows.Close()
-				return nil, err
-			}
-
-			movie.GenreIds = append(movie.GenreIds, genreID)
-		}
-
-		if err := genreRows.Err(); err != nil {
-			genreRows.Close()
-			return nil, err
-		}
-
-		genreRows.Close()
-
-		movies = append(movies, movie)
-	}
 
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
 	return movies, nil
 }
