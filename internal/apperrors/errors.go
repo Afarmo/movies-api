@@ -24,10 +24,13 @@ func WriteError(w http.ResponseWriter, err error) {
 
 	case errors.Is(err, ErrInvalidInput):
 		http.Error(w, "Invalid Input", http.StatusBadRequest)
+
 	case errors.Is(err, ErrAssociated):
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
 	case errors.Is(err, ErrDuplicateID):
 		http.Error(w, "Duplicate ID(s)", http.StatusBadRequest)
+
 	default:
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
