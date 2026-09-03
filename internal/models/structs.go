@@ -55,3 +55,39 @@ type ListMoviesResponse struct {
 	Total      int      `json:"total"`
 	TotalPages int      `json:"totalPages"`
 }
+
+type ActorFilter struct {
+	Page *int
+	Size *int
+}
+
+type ListActorsResult struct {
+	Actors []*Actor
+	Total  int
+}
+
+type ListActorsResponse struct {
+	Actors     []*Actor `json:"actors"`
+	Page       *int     `json:"page,omitempty"`
+	Size       *int     `json:"size,omitempty"`
+	Total      int      `json:"total"`
+	TotalPages int      `json:"totalPages"`
+}
+
+type GenreFilter struct {
+	Page *int
+	Size *int
+}
+
+type ListGenresResult struct {
+	Genres []*Genre
+	Total  int
+}
+
+type ListGenresResponse struct {
+	Genres     []*Genre `json:"genres"`
+	Page       *int     `json:"page,omitempty"`
+	Size       *int     `json:"size,omitempty"`
+	Total      int      `json:"total"`
+	TotalPages int      `json:"totalPages"`
+}

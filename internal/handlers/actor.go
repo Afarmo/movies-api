@@ -20,14 +20,52 @@ func NewActorHandler(actorService *service.ActorService) *ActorHandler {
 }
 
 func (h *ActorHandler) GetAllActorsHandler(w http.ResponseWriter, req *http.Request) {
-	actors, err := h.actorService.ListAllActors(req.Context())
+	query := req.URL.Query()
+	pageStr := query.Get("page")
+	sizeStr := query.Get("size")
+
+	filter := &models.ActorFilter{}
+	if pageStr != "" || sizeStr != "" {
+		if pageStr == "" || sizeStr == "" {
+			http.Error(w, "page and size must be provided together", http.StatusBadRequest)
+			return
+		}
+
+		page, err := strconv.Atoi(pageStr)
+		if err != nil || page < 0 {
+			http.Error(w, "Invalid page", http.StatusBadRequest)
+			return
+		}
+
+		size, err := strconv.Atoi(sizeStr)
+		if err != nil || size < 1 {
+			http.Error(w, "Invalid size", http.StatusBadRequest)
+			return
+		}
+
+		filter.Page = &page
+		filter.Size = &size
+	}
+
+	actors, err := h.actorService.ListActors(req.Context(), filter)
 	if err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
+	totalPages := 0
+	if filter.Page != nil && filter.Size != nil {
+		totalPages = (actors.Total + *filter.Size - 1) / *filter.Size
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(actors)
+	json.NewEncoder(w).Encode(models.ListActorsResponse{
+		Actors:     actors.Actors,
+		Page:       filter.Page,
+		Size:       filter.Size,
+		Total:      actors.Total,
+		TotalPages: totalPages,
+	})
 }
 
 func (h *ActorHandler) GetOneActorHandler(w http.ResponseWriter, req *http.Request) {
@@ -118,24 +156,18 @@ func (h *ActorHandler) UpdateActorHandler(w http.ResponseWriter, req *http.Reque
 func (h *ActorHandler) SearchActorsHandler(w http.ResponseWriter, req *http.Request) {
 	name := req.URL.Query().Get("name")
 
-	switch {
-	case name != "":
-		actors, err := h.actorService.SearchActors(req.Context(), name)
-		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(actors)
-	default:
-		actors, err := h.actorService.ListAllActors(req.Context())
-		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(actors)
+	if name != "" {
+		http.Error(w, "Name is required", http.StatusBadRequest)
 	}
+
+	actors, err := h.actorService.SearchActors(req.Context(), name)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(actors)
 }
 
 func (h *ActorHandler) GetActorsByMovie(w http.ResponseWriter, req *http.Request) {

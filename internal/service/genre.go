@@ -18,8 +18,8 @@ func (s *GenreService) InsertGenre(ctx context.Context, genre *models.Genre) err
 	return s.repo.InsertGenre(ctx, genre)
 }
 
-func (s *GenreService) ListAllGenres(ctx context.Context) ([]*models.Genre, error) {
-	return s.repo.ListAllGenres(ctx)
+func (s *GenreService) ListGenres(ctx context.Context, filter *models.GenreFilter) (*models.ListGenresResult, error) {
+	return s.repo.ListGenres(ctx, filter)
 }
 
 func (s *GenreService) ListOneGenre(ctx context.Context, id int64) (*models.Genre, error) {

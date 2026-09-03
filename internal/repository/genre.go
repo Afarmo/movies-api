@@ -112,12 +112,31 @@ func (r *GenreRepo) DeleteGenre(ctx context.Context, genreID int64, force bool) 
 
 }
 
-func (r *GenreRepo) ListAllGenres(ctx context.Context) ([]*models.Genre, error) {
-	query := "SELECT * FROM Genre"
-	rows, err := r.db.QueryContext(ctx, query)
+func (r *GenreRepo) ListGenres(ctx context.Context, filter *models.GenreFilter) (*models.ListGenresResult, error) {
+	var total int
+
+	if err := r.db.QueryRowContext(
+		ctx,
+		"SELECT COUNT(*) FROM Genre",
+	).Scan(&total); err != nil {
+		return nil, err
+	}
+
+	query := "SELECT id, name FROM Genre"
+
+	var args []any
+
+	if filter.Page != nil && filter.Size != nil {
+		offset := *filter.Page * *filter.Size
+		query += " LIMIT ? OFFSET ?"
+		args = append(args, *filter.Size, offset)
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	var genres []*models.Genre
 	for rows.Next() {
@@ -133,7 +152,10 @@ func (r *GenreRepo) ListAllGenres(ctx context.Context) ([]*models.Genre, error) 
 		return nil, err
 	}
 
-	return genres, nil
+	return &models.ListGenresResult{
+		Genres: genres,
+		Total:  total,
+	}, nil
 }
 
 func (r *GenreRepo) ListOneGenre(ctx context.Context, id int64) (*models.Genre, error) {

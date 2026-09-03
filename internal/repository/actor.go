@@ -127,30 +127,53 @@ func (r *ActorRepo) DeleteActor(ctx context.Context, actorID int64, force bool) 
 	return tx.Commit()
 }
 
-func (r *ActorRepo) ListAllActors(ctx context.Context) ([]*models.Actor, error) {
+func (r *ActorRepo) ListActors(ctx context.Context, filter *models.ActorFilter) (*models.ListActorsResult, error) {
+	var total int
+
+	if err := r.db.QueryRowContext(
+		ctx,
+		"SELECT COUNT(*) FROM Actor",
+	).Scan(&total); err != nil {
+		return nil, err
+	}
+
 	query := "SELECT id, name, birthdate FROM Actor"
-	rows, err := r.db.QueryContext(ctx, query)
+
+	var args []any
+
+	if filter.Page != nil && filter.Size != nil {
+		offset := *filter.Page * *filter.Size
+		query += " LIMIT ? OFFSET ?"
+		args = append(args, *filter.Size, offset)
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
+
 	var actors []*models.Actor
 	for rows.Next() {
 		actor := &models.Actor{}
-		err := rows.Scan(
+		if err := rows.Scan(
 			&actor.ID,
 			&actor.Name,
 			&actor.BirthDate,
-		)
-		if err != nil {
+		); err != nil {
 			return nil, err
 		}
 
 		actors = append(actors, actor)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	return actors, nil
+	return &models.ListActorsResult{
+		Actors: actors,
+		Total:  total,
+	}, nil
 }
 
 func (r *ActorRepo) ListOneActor(ctx context.Context, id int64) (*models.Actor, error) {

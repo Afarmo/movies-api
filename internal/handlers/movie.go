@@ -21,7 +21,7 @@ func NewMovieHandler(movieService *service.MovieService) *MovieHandler {
 func (h *MovieHandler) GetAllMoviesHandler(w http.ResponseWriter, req *http.Request) {
 	query := req.URL.Query()
 
-	var filter models.MovieFilter
+	filter := models.MovieFilter{}
 
 	if genreStr := query.Get("genre"); genreStr != "" {
 		genreID, err := strconv.ParseInt(genreStr, 10, 64)

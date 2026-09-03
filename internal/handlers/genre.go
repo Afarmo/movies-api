@@ -19,14 +19,52 @@ func NewGenreHandler(genreService *service.GenreService) *GenreHandler {
 }
 
 func (h *GenreHandler) GetAllGenresHandler(w http.ResponseWriter, req *http.Request) {
-	genres, err := h.genreService.ListAllGenres(req.Context())
+	query := req.URL.Query()
+
+	filter := models.GenreFilter{}
+	pageStr := query.Get("page")
+	sizeStr := query.Get("size")
+	if pageStr != "" || sizeStr != "" {
+		if pageStr == "" || sizeStr == "" {
+			http.Error(w, "page and size must be provided together", http.StatusBadRequest)
+			return
+		}
+
+		page, err := strconv.Atoi(pageStr)
+		if err != nil || page < 0 {
+			http.Error(w, "Invalid page", http.StatusBadRequest)
+			return
+		}
+
+		size, err := strconv.Atoi(sizeStr)
+		if err != nil || size < 1 {
+			http.Error(w, "Invalid size", http.StatusBadRequest)
+			return
+		}
+
+		filter.Page = &page
+		filter.Size = &size
+	}
+
+	genres, err := h.genreService.ListGenres(req.Context(), &filter)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
+	totalPages := 0
+	if filter.Page != nil && filter.Size != nil {
+		totalPages = (genres.Total + *filter.Size - 1) / *filter.Size
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(genres)
+	json.NewEncoder(w).Encode(models.ListGenresResponse{
+		Genres:     genres.Genres,
+		Page:       filter.Page,
+		Size:       filter.Size,
+		Total:      genres.Total,
+		TotalPages: totalPages,
+	})
 }
 
 func (h *GenreHandler) GetOneGenreHandler(w http.ResponseWriter, req *http.Request) {

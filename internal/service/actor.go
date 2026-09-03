@@ -18,8 +18,8 @@ func (s *ActorService) InsertActor(ctx context.Context, actor *models.Actor) err
 	return s.repo.InsertActor(ctx, actor)
 }
 
-func (s *ActorService) ListAllActors(ctx context.Context) ([]*models.Actor, error) {
-	return s.repo.ListAllActors(ctx)
+func (s *ActorService) ListActors(ctx context.Context, filter *models.ActorFilter) (*models.ListActorsResult, error) {
+	return s.repo.ListActors(ctx, filter)
 }
 
 func (s *ActorService) ListOneActor(ctx context.Context, id int64) (*models.Actor, error) {
