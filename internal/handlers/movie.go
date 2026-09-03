@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"movies-api/internal/apperrors"
 	"movies-api/internal/models"
 	"movies-api/internal/service"
 	"movies-api/internal/validation"
@@ -27,7 +28,7 @@ func (h *MovieHandler) GetAllMoviesHandler(w http.ResponseWriter, req *http.Requ
 	if genreStr := query.Get("genre"); genreStr != "" {
 		genreID, err := strconv.ParseInt(genreStr, 10, 64)
 		if err != nil || genreID < 1 {
-			http.Error(w, "invalid genre id", http.StatusBadRequest)
+			http.Error(w, "Invalid genre ID", http.StatusBadRequest)
 			return
 		}
 
@@ -37,7 +38,7 @@ func (h *MovieHandler) GetAllMoviesHandler(w http.ResponseWriter, req *http.Requ
 	if actorStr := query.Get("actor"); actorStr != "" {
 		actorID, err := strconv.ParseInt(actorStr, 10, 64)
 		if err != nil || actorID < 1 {
-			http.Error(w, "invalid actor id", http.StatusBadRequest)
+			http.Error(w, "Invalid actor ID", http.StatusBadRequest)
 			return
 		}
 
@@ -47,7 +48,7 @@ func (h *MovieHandler) GetAllMoviesHandler(w http.ResponseWriter, req *http.Requ
 	if yearStr := query.Get("year"); yearStr != "" {
 		year, err := strconv.Atoi(yearStr)
 		if err != nil {
-			http.Error(w, "invalid release year", http.StatusBadRequest)
+			http.Error(w, "Invalid release year", http.StatusBadRequest)
 			return
 		}
 
@@ -59,13 +60,13 @@ func (h *MovieHandler) GetAllMoviesHandler(w http.ResponseWriter, req *http.Requ
 	if pageStr != "" && sizeStr != "" {
 		page, err := strconv.Atoi(pageStr)
 		if err != nil || page < 0 {
-			http.Error(w, "invalid page", http.StatusBadRequest)
+			http.Error(w, "Invalid page", http.StatusBadRequest)
 			return
 		}
 
 		size, err := strconv.Atoi(sizeStr)
 		if err != nil || size < 1 {
-			http.Error(w, "invalid size", http.StatusBadRequest)
+			http.Error(w, "Invalid size", http.StatusBadRequest)
 			return
 		}
 
@@ -75,7 +76,7 @@ func (h *MovieHandler) GetAllMoviesHandler(w http.ResponseWriter, req *http.Requ
 
 	movies, err := h.movieService.ListMovies(req.Context(), &filter)
 	if err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
@@ -86,12 +87,12 @@ func (h *MovieHandler) GetAllMoviesHandler(w http.ResponseWriter, req *http.Requ
 func (h *MovieHandler) GetOneMovieHandler(w http.ResponseWriter, req *http.Request) {
 	movieID, err := strconv.ParseInt(req.PathValue("id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid movie id", http.StatusBadRequest)
+		http.Error(w, "Invalid movie ID", http.StatusBadRequest)
 		return
 	}
 	movie, err := h.movieService.ListOneMovie(req.Context(), movieID)
 	if err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		apperrors.WriteError(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -103,7 +104,7 @@ func (h *MovieHandler) CreateMovieHandler(w http.ResponseWriter, req *http.Reque
 
 	err := json.NewDecoder(req.Body).Decode(&movie)
 	if err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
@@ -124,7 +125,7 @@ func (h *MovieHandler) CreateMovieHandler(w http.ResponseWriter, req *http.Reque
 
 	if err := h.movieService.InsertMovie(req.Context(), &movie); err != nil {
 		fmt.Println(movie)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
@@ -136,12 +137,12 @@ func (h *MovieHandler) CreateMovieHandler(w http.ResponseWriter, req *http.Reque
 func (h *MovieHandler) DeleteMovieHandler(w http.ResponseWriter, req *http.Request) {
 	movieID, err := strconv.ParseInt(req.PathValue("id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid movie id", http.StatusBadRequest)
+		http.Error(w, "Invalid movie ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.movieService.DeleteMovie(req.Context(), movieID); err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		apperrors.WriteError(w, err)
 		return
 	}
 
@@ -151,14 +152,14 @@ func (h *MovieHandler) DeleteMovieHandler(w http.ResponseWriter, req *http.Reque
 func (h *MovieHandler) UpdateMovieHandler(w http.ResponseWriter, req *http.Request) {
 	movieID, err := strconv.ParseInt(req.PathValue("id"), 10, 64)
 	if err != nil || movieID <= 0 {
-		http.Error(w, "invalid movie id", http.StatusBadRequest)
+		http.Error(w, "Invalid movie ID", http.StatusBadRequest)
 		return
 	}
 
 	var movie models.MoviePatch
 
 	if err := json.NewDecoder(req.Body).Decode(&movie); err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 	if err := validation.ValidateMoviePatch(movie); err != nil {
@@ -186,7 +187,7 @@ func (h *MovieHandler) UpdateMovieHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	if err := h.movieService.UpdateMovie(req.Context(), movieID, &movie); err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		apperrors.WriteError(w, err)
 		return
 	}
 
@@ -207,7 +208,7 @@ func (h *MovieHandler) SearchMoviesHandler(w http.ResponseWriter, req *http.Requ
 		movies, err = h.movieService.ListMovies(req.Context(), &filter)
 	}
 	if err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 

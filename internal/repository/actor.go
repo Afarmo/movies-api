@@ -5,28 +5,19 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"movies-api/internal/apperrors"
 	"movies-api/internal/models"
 	"strings"
 )
 
-var (
-	ErrNotFound     = errors.New("record not found")
-	ErrDuplicateID  = errors.New("duplicate key violation")
-	ErrInvalidInput = errors.New("invalid input")
-)
-
-// ActorRepo handles user database operations
 type ActorRepo struct {
 	db *sql.DB
 }
 
-// NewActorRepo creates new actor repo
 func NewActorRepo(db *sql.DB) *ActorRepo {
 	return &ActorRepo{db: db}
 }
 
-// Creates and Inserts a new actor into the db
-// Returns the insterted Actor
 func (r *ActorRepo) InsertActor(ctx context.Context, actor *models.Actor) error {
 	query := `
         INSERT INTO Actor (name, birthDate)
@@ -37,15 +28,11 @@ func (r *ActorRepo) InsertActor(ctx context.Context, actor *models.Actor) error 
 		actor.BirthDate,
 	)
 	if err != nil {
-		if isUniqueConstraintError(err) {
-			return ErrDuplicateID
-		}
 		return err
 	}
 	id, err := result.LastInsertId()
 
 	if err != nil {
-
 		return err
 	}
 	actor.ID = int(id)
@@ -53,7 +40,6 @@ func (r *ActorRepo) InsertActor(ctx context.Context, actor *models.Actor) error 
 	return nil
 }
 
-// Update an Actor
 func (r *ActorRepo) UpdateActor(ctx context.Context, id int64, actor *models.ActorPatch) error {
 	query := "Update Actor SET"
 	args := []any{}
@@ -73,9 +59,6 @@ func (r *ActorRepo) UpdateActor(ctx context.Context, id int64, actor *models.Act
 	result, err := r.db.ExecContext(ctx, query, args...)
 
 	if err != nil {
-		if isUniqueConstraintError(err) {
-			return ErrDuplicateID
-		}
 		return err
 	}
 
@@ -84,13 +67,12 @@ func (r *ActorRepo) UpdateActor(ctx context.Context, id int64, actor *models.Act
 		return err
 	}
 	if rowsAffected == 0 {
-		return ErrNotFound
+		return apperrors.ErrNotFound
 	}
 
 	return nil
 }
 
-// Delete an Actor from the db
 func (r *ActorRepo) DeleteActor(ctx context.Context, actorID int64, force bool) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -111,7 +93,7 @@ func (r *ActorRepo) DeleteActor(ctx context.Context, actorID int64, force bool) 
 	}
 
 	if count > 0 && !force {
-		return fmt.Errorf("actor is associated with %d movie(s)", count)
+		return fmt.Errorf("%w: actor is associated with %d movie(s)", apperrors.ErrConflict, count)
 	}
 
 	if force {
@@ -138,7 +120,7 @@ func (r *ActorRepo) DeleteActor(ctx context.Context, actorID int64, force bool) 
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("actor not found")
+		return apperrors.ErrNotFound
 	}
 
 	return tx.Commit()
@@ -172,9 +154,13 @@ func (r *ActorRepo) ListAllActors(ctx context.Context) ([]*models.Actor, error) 
 
 func (r *ActorRepo) ListOneActor(ctx context.Context, id int64) (*models.Actor, error) {
 	query := "SELECT * FROM Actor WHERE id = ?"
+
 	actor := &models.Actor{}
 	err := r.db.QueryRowContext(ctx, query, id).Scan(&actor.ID, &actor.Name, &actor.BirthDate)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperrors.ErrNotFound
+		}
 		return nil, err
 	}
 
@@ -198,19 +184,22 @@ func (r *ActorRepo) SearchActors(ctx context.Context, name string) ([]*models.Ac
 	var actors []*models.Actor
 
 	for rows.Next() {
-
 		actor := &models.Actor{}
-		err := rows.Scan(&actor.ID,
+
+		if err := rows.Scan(&actor.ID,
 			&actor.Name,
-			&actor.BirthDate)
-		if err != nil {
+			&actor.BirthDate,
+		); err != nil {
 			return nil, err
 		}
+
 		actors = append(actors, actor)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
 	return actors, nil
 }
 
@@ -221,6 +210,7 @@ func (r *ActorRepo) ActorsByMovie(ctx context.Context, movieId int64) ([]*models
         JOIN Movie_Actors ma ON a.id = ma.actor_id
         WHERE ma.movie_id = ?
     `
+
 	rows, err := r.db.QueryContext(ctx, query, movieId)
 	if err != nil {
 		return nil, err
@@ -231,12 +221,11 @@ func (r *ActorRepo) ActorsByMovie(ctx context.Context, movieId int64) ([]*models
 
 	for rows.Next() {
 		actor := &models.Actor{}
-		err := rows.Scan(
+		if err := rows.Scan(
 			&actor.ID,
 			&actor.Name,
 			&actor.BirthDate,
-		)
-		if err != nil {
+		); err != nil {
 			return nil, err
 		}
 
@@ -248,10 +237,4 @@ func (r *ActorRepo) ActorsByMovie(ctx context.Context, movieId int64) ([]*models
 	}
 
 	return actors, nil
-}
-
-func isUniqueConstraintError(err error) bool {
-	// SQLite error message contains "UNIQUE constraint failed"
-	return err != nil && (strings.Contains(err.Error(), "UNIQUE constraint failed") ||
-		strings.Contains(err.Error(), "unique constraint"))
 }

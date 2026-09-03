@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
+	"movies-api/internal/apperrors"
 	"movies-api/internal/models"
 	"movies-api/internal/service"
 	"movies-api/internal/validation"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 type ActorHandler struct {
@@ -38,7 +38,7 @@ func (h *ActorHandler) GetOneActorHandler(w http.ResponseWriter, req *http.Reque
 
 	actor, err := h.actorService.ListOneActor(req.Context(), actorID)
 	if err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		apperrors.WriteError(w, err)
 		return
 	}
 
@@ -50,7 +50,7 @@ func (h *ActorHandler) CreateActorHandler(w http.ResponseWriter, req *http.Reque
 	var actor models.Actor
 
 	if err := json.NewDecoder(req.Body).Decode(&actor); err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 	if err := validation.ValidateActor(actor); err != nil {
@@ -58,7 +58,7 @@ func (h *ActorHandler) CreateActorHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 	if err := h.actorService.InsertActor(req.Context(), &actor); err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
@@ -72,26 +72,14 @@ func (h *ActorHandler) DeleteActorHandler(w http.ResponseWriter, req *http.Reque
 
 	actorID, err := strconv.ParseInt(idString, 10, 64)
 	if err != nil {
-		http.Error(w, "invalid actor id", http.StatusBadRequest)
+		http.Error(w, "Invalid actor ID", http.StatusBadRequest)
 		return
 	}
 
 	force := req.URL.Query().Get("force") == "true"
 
-	err = h.actorService.DeleteActor(req.Context(), actorID, force)
-	if err != nil {
-
-		if strings.Contains(err.Error(), "associated") {
-			http.Error(w, err.Error(), http.StatusConflict)
-			return
-		}
-
-		if strings.Contains(err.Error(), "not found") {
-			http.Error(w, err.Error(), http.StatusNotFound)
-			return
-		}
-
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+	if err = h.actorService.DeleteActor(req.Context(), actorID, force); err != nil {
+		apperrors.WriteError(w, err)
 		return
 	}
 
@@ -101,19 +89,19 @@ func (h *ActorHandler) DeleteActorHandler(w http.ResponseWriter, req *http.Reque
 func (h *ActorHandler) UpdateActorHandler(w http.ResponseWriter, req *http.Request) {
 	actorID, err := strconv.ParseInt(req.PathValue("id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid actor id", http.StatusBadRequest)
+		http.Error(w, "Invalid actor ID", http.StatusBadRequest)
 		return
 	}
 
 	var actor models.ActorPatch
 
 	if err := json.NewDecoder(req.Body).Decode(&actor); err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.actorService.UpdateActor(req.Context(), actorID, &actor); err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		apperrors.WriteError(w, err)
 		return
 	}
 
@@ -127,7 +115,7 @@ func (h *ActorHandler) SearchActorsHandler(w http.ResponseWriter, req *http.Requ
 	case name != "":
 		actors, err := h.actorService.SearchActors(req.Context(), name)
 		if err != nil {
-			http.Error(w, "internal server error", http.StatusInternalServerError)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -135,7 +123,7 @@ func (h *ActorHandler) SearchActorsHandler(w http.ResponseWriter, req *http.Requ
 	default:
 		actors, err := h.actorService.ListAllActors(req.Context())
 		if err != nil {
-			http.Error(w, "internal server error", http.StatusInternalServerError)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -147,7 +135,7 @@ func (h *ActorHandler) GetActorsByMovie(w http.ResponseWriter, req *http.Request
 	movieId, err := strconv.ParseInt(req.PathValue("movieId"), 10, 64)
 	actors, err := h.actorService.ActorsByMovie(req.Context(), movieId)
 	if err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 

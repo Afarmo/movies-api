@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"movies-api/internal/apperrors"
 	"movies-api/internal/models"
 	"movies-api/internal/service"
 	"movies-api/internal/validation"
@@ -20,7 +21,7 @@ func NewGenreHandler(genreService *service.GenreService) *GenreHandler {
 func (h *GenreHandler) GetAllGenresHandler(w http.ResponseWriter, req *http.Request) {
 	genres, err := h.genreService.ListAllGenres(req.Context())
 	if err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
@@ -31,13 +32,13 @@ func (h *GenreHandler) GetAllGenresHandler(w http.ResponseWriter, req *http.Requ
 func (h *GenreHandler) GetOneGenreHandler(w http.ResponseWriter, req *http.Request) {
 	genreID, err := strconv.ParseInt(req.PathValue("id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid genre id", http.StatusBadRequest)
+		http.Error(w, "Invalid genre ID", http.StatusBadRequest)
 		return
 	}
 
 	genre, err := h.genreService.ListOneGenre(req.Context(), genreID)
 	if err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		apperrors.WriteError(w, err)
 		return
 	}
 
@@ -49,7 +50,7 @@ func (h *GenreHandler) CreateGenreHandler(w http.ResponseWriter, req *http.Reque
 	var genre models.Genre
 
 	if err := json.NewDecoder(req.Body).Decode(&genre); err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 	if err := validation.ValidateGenre(genre); err != nil {
@@ -58,7 +59,7 @@ func (h *GenreHandler) CreateGenreHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	if err := h.genreService.InsertGenre(req.Context(), &genre); err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		apperrors.WriteError(w, err)
 		return
 	}
 
@@ -70,12 +71,12 @@ func (h *GenreHandler) CreateGenreHandler(w http.ResponseWriter, req *http.Reque
 func (h *GenreHandler) DeleteGenreHandler(w http.ResponseWriter, req *http.Request) {
 	genreID, err := strconv.ParseInt(req.PathValue("id"), 10, 64)
 	if err != nil || genreID <= 0 {
-		http.Error(w, "invalid genre id", http.StatusBadRequest)
+		http.Error(w, "Invalid genre ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.genreService.DeleteGenre(req.Context(), genreID); err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		apperrors.WriteError(w, err)
 		return
 	}
 
@@ -85,20 +86,20 @@ func (h *GenreHandler) DeleteGenreHandler(w http.ResponseWriter, req *http.Reque
 func (h *GenreHandler) UpdateGenreHandler(w http.ResponseWriter, req *http.Request) {
 	genreID, err := strconv.ParseInt(req.PathValue("id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid genre id", http.StatusBadRequest)
+		http.Error(w, "Invalid genre ID", http.StatusBadRequest)
 		return
 	}
 
 	var genre models.Genre
 
 	if err := json.NewDecoder(req.Body).Decode(&genre); err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 	genre.ID = int(genreID)
 
 	if err := h.genreService.UpdateGenre(req.Context(), &genre); err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		apperrors.WriteError(w, err)
 		return
 	}
 

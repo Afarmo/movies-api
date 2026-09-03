@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"movies-api/internal/apperrors"
 	"movies-api/internal/models"
 	"strings"
 )
@@ -109,7 +111,7 @@ func (r *MovieRepo) UpdateMovie(ctx context.Context, id int64, movie *models.Mov
 		}
 
 		if rowsAffected == 0 {
-			return ErrNotFound
+			return apperrors.ErrNotFound
 		}
 	}
 
@@ -183,7 +185,7 @@ func (r *MovieRepo) DeleteMovie(ctx context.Context, id int64) error {
 		return err
 	}
 	if rowsAffected == 0 {
-		return ErrNotFound
+		return apperrors.ErrNotFound
 	}
 	return nil
 }
@@ -192,13 +194,17 @@ func (r *MovieRepo) ListOneMovie(ctx context.Context, id int64) (*models.Movie, 
 
 	movie := &models.Movie{}
 	query := "SELECT id, title, releaseyear, duration FROM Movie WHERE id = ?"
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&movie.ID,
+	if err := r.db.QueryRowContext(ctx, query, id).Scan(&movie.ID,
 		&movie.Title,
 		&movie.ReleaseYear,
-		&movie.Duration)
-	if err != nil {
+		&movie.Duration,
+	); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperrors.ErrNotFound
+		}
 		return nil, err
 	}
+
 	actorQuery := `
 			SELECT actor_id
 			FROM Movie_Actors
