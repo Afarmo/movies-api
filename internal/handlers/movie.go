@@ -58,13 +58,13 @@ func (h *MovieHandler) GetAllMoviesHandler(w http.ResponseWriter, req *http.Requ
 	sizeStr := query.Get("size")
 	if pageStr != "" && sizeStr != "" {
 		page, err := strconv.Atoi(pageStr)
-		if err != nil {
+		if err != nil || page < 0 {
 			http.Error(w, "invalid page", http.StatusBadRequest)
 			return
 		}
 
 		size, err := strconv.Atoi(sizeStr)
-		if err != nil {
+		if err != nil || size < 1 {
 			http.Error(w, "invalid size", http.StatusBadRequest)
 			return
 		}
