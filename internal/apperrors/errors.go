@@ -20,7 +20,7 @@ func WriteError(w http.ResponseWriter, err error) {
 		http.Error(w, "Record Not Found", http.StatusNotFound)
 
 	case errors.Is(err, ErrConflict):
-		http.Error(w, "Conflict", http.StatusConflict)
+		http.Error(w, "Conflict", http.StatusBadRequest)
 
 	case errors.Is(err, ErrInvalidInput):
 		http.Error(w, "Invalid Input", http.StatusBadRequest)
