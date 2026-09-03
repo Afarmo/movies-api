@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"movies-api/internal/apperrors"
 	"movies-api/internal/models"
 	"strings"
@@ -59,10 +60,41 @@ func (r *GenreRepo) UpdateGenre(ctx context.Context, genre *models.Genre) error 
 	return nil
 }
 
-func (r *GenreRepo) DeleteGenre(ctx context.Context, id int64) error {
-	query := "DELETE FROM Genre WHERE id = ?"
+func (r *GenreRepo) DeleteGenre(ctx context.Context, genreID int64, force bool) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
 
-	result, err := r.db.ExecContext(ctx, query, id)
+	var count int
+
+	if err = tx.QueryRowContext(ctx, `
+		SELECT COUNT(*)
+		FROM Movie_Genres
+		WHERE genre_id = ?
+	`, genreID).Scan(&count); err != nil {
+		return err
+	}
+
+	if count > 0 && !force {
+		return fmt.Errorf("%w: genre is associated with %d movie(s)", apperrors.ErrAssociated, count)
+	}
+
+	if force {
+		if _, err = tx.ExecContext(ctx, `
+			DELETE FROM Movie_Genres
+			WHERE genre_id = ?
+		`, genreID); err != nil {
+			return err
+		}
+	}
+
+	result, err := tx.ExecContext(ctx, `
+		DELETE FROM Genre
+		WHERE id = ?
+	`, genreID)
+
 	if err != nil {
 		return err
 	}
@@ -71,11 +103,13 @@ func (r *GenreRepo) DeleteGenre(ctx context.Context, id int64) error {
 	if err != nil {
 		return err
 	}
+
 	if rowsAffected == 0 {
 		return apperrors.ErrNotFound
 	}
 
-	return nil
+	return tx.Commit()
+
 }
 
 func (r *GenreRepo) ListAllGenres(ctx context.Context) ([]*models.Genre, error) {

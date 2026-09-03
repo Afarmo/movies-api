@@ -156,37 +156,38 @@ func (h *MovieHandler) UpdateMovieHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	var movie models.MoviePatch
+	var moviePatch models.MoviePatch
 
-	if err := json.NewDecoder(req.Body).Decode(&movie); err != nil {
+	if err := json.NewDecoder(req.Body).Decode(&moviePatch); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
-	if err := validation.ValidateMoviePatch(movie); err != nil {
+	if err := validation.ValidateMoviePatch(moviePatch); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := validation.ValidateIDs(movie.AddActorIds); err != nil {
+	if err := validation.ValidateIDs(moviePatch.AddActorIds); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := validation.ValidateIDs(movie.AddGenreIds); err != nil {
+	if err := validation.ValidateIDs(moviePatch.AddGenreIds); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := validation.ValidateIDs(movie.RemoveActorIds); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if err := validation.ValidateIDs(movie.RemoveGenreIds); err != nil {
+	if err := validation.ValidateIDs(moviePatch.RemoveActorIds); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := h.movieService.UpdateMovie(req.Context(), movieID, &movie); err != nil {
+	if err := validation.ValidateIDs(moviePatch.RemoveGenreIds); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	movie, err := h.movieService.UpdateMovie(req.Context(), movieID, &moviePatch)
+	if err != nil {
 		apperrors.WriteError(w, err)
 		return
 	}

@@ -44,7 +44,7 @@ func ValidateMoviePatch(movie models.MoviePatch) error {
 	}
 
 	if movie.Duration != nil {
-		if *movie.Duration <= 1 {
+		if *movie.Duration < 1 {
 			return errors.New("duration must be greater than 0")
 		}
 	}
@@ -80,7 +80,7 @@ func ValidateIDs(ids []int) error {
 
 	for _, id := range ids {
 
-		if id <= 1 {
+		if id < 1 {
 			return errors.New("IDs must be greater than 0")
 		}
 

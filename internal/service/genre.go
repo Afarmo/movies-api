@@ -30,6 +30,6 @@ func (s *GenreService) UpdateGenre(ctx context.Context, genre *models.Genre) err
 	return s.repo.UpdateGenre(ctx, genre)
 }
 
-func (s *GenreService) DeleteGenre(ctx context.Context, id int64) error {
-	return s.repo.DeleteGenre(ctx, id)
+func (s *GenreService) DeleteGenre(ctx context.Context, id int64, force bool) error {
+	return s.repo.DeleteGenre(ctx, id, force)
 }

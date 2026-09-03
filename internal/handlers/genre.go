@@ -74,8 +74,9 @@ func (h *GenreHandler) DeleteGenreHandler(w http.ResponseWriter, req *http.Reque
 		http.Error(w, "Invalid genre ID", http.StatusBadRequest)
 		return
 	}
+	force := req.URL.Query().Get("force") == "true"
 
-	if err := h.genreService.DeleteGenre(req.Context(), genreID); err != nil {
+	if err := h.genreService.DeleteGenre(req.Context(), genreID, force); err != nil {
 		apperrors.WriteError(w, err)
 		return
 	}
@@ -103,5 +104,7 @@ func (h *GenreHandler) UpdateGenreHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(genre)
 }

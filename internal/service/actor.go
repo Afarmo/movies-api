@@ -26,7 +26,7 @@ func (s *ActorService) ListOneActor(ctx context.Context, id int64) (*models.Acto
 	return s.repo.ListOneActor(ctx, id)
 }
 
-func (s *ActorService) UpdateActor(ctx context.Context, id int64, actor *models.ActorPatch) error {
+func (s *ActorService) UpdateActor(ctx context.Context, id int64, actor *models.ActorPatch) (*models.Actor, error) {
 	return s.repo.UpdateActor(ctx, id, actor)
 }
 

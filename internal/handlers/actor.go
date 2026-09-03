@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"movies-api/internal/apperrors"
 	"movies-api/internal/models"
 	"movies-api/internal/service"
@@ -93,19 +94,21 @@ func (h *ActorHandler) UpdateActorHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	var actor models.ActorPatch
+	var actorPatch models.ActorPatch
 
-	if err := json.NewDecoder(req.Body).Decode(&actor); err != nil {
+	if err := json.NewDecoder(req.Body).Decode(&actorPatch); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.actorService.UpdateActor(req.Context(), actorID, &actor); err != nil {
+	actor, err := h.actorService.UpdateActor(req.Context(), actorID, &actorPatch)
+	if err != nil {
 		apperrors.WriteError(w, err)
 		return
 	}
-
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(actor)
 }
 
 func (h *ActorHandler) SearchActorsHandler(w http.ResponseWriter, req *http.Request) {
@@ -133,12 +136,18 @@ func (h *ActorHandler) SearchActorsHandler(w http.ResponseWriter, req *http.Requ
 
 func (h *ActorHandler) GetActorsByMovie(w http.ResponseWriter, req *http.Request) {
 	movieId, err := strconv.ParseInt(req.PathValue("movieId"), 10, 64)
+	if err != nil || movieId < 1 {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+
 	actors, err := h.actorService.ActorsByMovie(req.Context(), movieId)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		fmt.Println(">>>", err)
+		apperrors.WriteError(w, err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(actors)
+	json.NewEncoder(w).Encode(&actors)
 }

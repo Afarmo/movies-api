@@ -26,7 +26,7 @@ func (s *MovieService) ListOneMovie(ctx context.Context, id int64) (*models.Movi
 	return s.repo.ListOneMovie(ctx, id)
 }
 
-func (s *MovieService) UpdateMovie(ctx context.Context, id int64, movie *models.MoviePatch) error {
+func (s *MovieService) UpdateMovie(ctx context.Context, id int64, movie *models.MoviePatch) (*models.Movie, error) {
 	return s.repo.UpdateMovie(ctx, id, movie)
 }
 

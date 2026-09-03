@@ -67,11 +67,11 @@ func (r *MovieRepo) InsertMovie(ctx context.Context, movie *models.Movie) error 
 	return tx.Commit()
 }
 
-func (r *MovieRepo) UpdateMovie(ctx context.Context, id int64, movie *models.MoviePatch) error {
+func (r *MovieRepo) UpdateMovie(ctx context.Context, id int64, movie *models.MoviePatch) (*models.Movie, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer tx.Rollback()
@@ -102,16 +102,16 @@ func (r *MovieRepo) UpdateMovie(ctx context.Context, id int64, movie *models.Mov
 
 		result, err := tx.ExecContext(ctx, query, args...)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		rowsAffected, err := result.RowsAffected()
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if rowsAffected == 0 {
-			return apperrors.ErrNotFound
+			return nil, apperrors.ErrNotFound
 		}
 	}
 
@@ -123,7 +123,7 @@ func (r *MovieRepo) UpdateMovie(ctx context.Context, id int64, movie *models.Mov
 	`, id, actorID)
 
 			if err != nil {
-				return err
+				return nil, apperrors.ErrDuplicateID
 			}
 		}
 
@@ -138,7 +138,7 @@ func (r *MovieRepo) UpdateMovie(ctx context.Context, id int64, movie *models.Mov
 
 			if err != nil {
 
-				return err
+				return nil, err
 			}
 		}
 	}
@@ -151,8 +151,7 @@ func (r *MovieRepo) UpdateMovie(ctx context.Context, id int64, movie *models.Mov
 	`, id, genreID)
 
 			if err != nil {
-
-				return err
+				return nil, err
 			}
 		}
 	}
@@ -165,12 +164,17 @@ func (r *MovieRepo) UpdateMovie(ctx context.Context, id int64, movie *models.Mov
 	`, id, genreID)
 
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
+	tx.Commit()
+	m, err := r.ListOneMovie(ctx, id)
+	if err != nil {
+		return nil, err
+	}
 
-	return tx.Commit()
+	return m, nil
 }
 
 func (r *MovieRepo) DeleteMovie(ctx context.Context, id int64) error {

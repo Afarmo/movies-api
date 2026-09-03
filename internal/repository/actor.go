@@ -40,8 +40,8 @@ func (r *ActorRepo) InsertActor(ctx context.Context, actor *models.Actor) error 
 	return nil
 }
 
-func (r *ActorRepo) UpdateActor(ctx context.Context, id int64, actor *models.ActorPatch) error {
-	query := "Update Actor SET"
+func (r *ActorRepo) UpdateActor(ctx context.Context, id int64, actor *models.ActorPatch) (*models.Actor, error) {
+	query := "Update Actor SET "
 	args := []any{}
 
 	if actor.Name != nil {
@@ -59,18 +59,19 @@ func (r *ActorRepo) UpdateActor(ctx context.Context, id int64, actor *models.Act
 	result, err := r.db.ExecContext(ctx, query, args...)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if rowsAffected == 0 {
-		return apperrors.ErrNotFound
+		return nil, apperrors.ErrNotFound
 	}
 
-	return nil
+	a, err := r.ListOneActor(ctx, id)
+	return a, nil
 }
 
 func (r *ActorRepo) DeleteActor(ctx context.Context, actorID int64, force bool) error {
@@ -93,7 +94,7 @@ func (r *ActorRepo) DeleteActor(ctx context.Context, actorID int64, force bool) 
 	}
 
 	if count > 0 && !force {
-		return fmt.Errorf("%w: actor is associated with %d movie(s)", apperrors.ErrConflict, count)
+		return fmt.Errorf("%w: actor is associated with %d movie(s)", apperrors.ErrAssociated, count)
 	}
 
 	if force {
@@ -204,6 +205,21 @@ func (r *ActorRepo) SearchActors(ctx context.Context, name string) ([]*models.Ac
 }
 
 func (r *ActorRepo) ActorsByMovie(ctx context.Context, movieId int64) ([]*models.Actor, error) {
+	var exists int
+
+	err := r.db.QueryRowContext(
+		ctx,
+		`SELECT 1 FROM Movie WHERE id = ?`,
+		movieId,
+	).Scan(&exists)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperrors.ErrNotFound
+		}
+		return nil, err
+	}
+
 	query := `
         SELECT a.id, a.name, a.birthDate
         FROM Actor a
@@ -215,6 +231,7 @@ func (r *ActorRepo) ActorsByMovie(ctx context.Context, movieId int64) ([]*models
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	var actors []*models.Actor
