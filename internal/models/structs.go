@@ -42,3 +42,16 @@ type MovieFilter struct {
 	Page    *int
 	Size    *int
 }
+
+type ListMoviesResult struct {
+	Movies []*Movie
+	Total  int
+}
+
+type ListMoviesResponse struct {
+	Movies     []*Movie `json:"movies"`
+	Page       *int     `json:"page,omitempty"`
+	Size       *int     `json:"size,omitempty"`
+	Total      int      `json:"total"`
+	TotalPages int      `json:"totalPages"`
+}
