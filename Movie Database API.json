@@ -1,0 +1,286 @@
+{
+  "info": {
+    "_postman_id": "9f8c1c7e-2b14-4a53-9d5f-7e4b2c1a6d90",
+    "name": "Movies API - Full Test Collection",
+    "description": "Collection for testing the Movies API actors, genres, movies, searches, filters, relationships, CRUD operations, and PATCH updates.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "actorId",
+      "value": "1"
+    },
+    {
+      "key": "movieId",
+      "value": "1"
+    },
+    {
+      "key": "genreId",
+      "value": "1"
+    },
+    {
+      "key": "movieActorId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Actors",
+      "item": [
+        {
+          "name": "Get All Actors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/actors"
+          }
+        },
+        {
+          "name": "Search Actors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/actors/search?name=Leonardo"
+          }
+        },
+        {
+          "name": "Get One Actor",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/actors/{{actorId}}"
+          }
+        },
+        {
+          "name": "Get Actors By Movie",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/movies/{{movieActorId}}/actors"
+          }
+        },
+        {
+          "name": "Create Actor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Keanu Reeves\",\n  \"birthdate\": \"1964-09-02\"\n}"
+            },
+            "url": "{{baseUrl}}/api/actors"
+          }
+        },
+        {
+          "name": "Update Actor",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tom Cruise Updated\"\n}"
+            },
+            "url": "{{baseUrl}}/api/actors/{{actorId}}"
+          }
+        },
+        {
+          "name": "Delete Actor",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/actors/{{actorId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Genres",
+      "item": [
+        {
+          "name": "Get All Genres",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/genres"
+          }
+        },
+        {
+          "name": "Get One Genre",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/genres/{{genreId}}"
+          }
+        },
+        {
+          "name": "Create Genre",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Adventure\"\n}"
+            },
+            "url": "{{baseUrl}}/api/genres"
+          }
+        },
+        {
+          "name": "Update Genre",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Action Updated\"\n}"
+            },
+            "url": "{{baseUrl}}/api/genres/{{genreId}}"
+          }
+        },
+        {
+          "name": "Delete Genre",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/genres/{{genreId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Movies",
+      "item": [
+        {
+          "name": "Get All Movies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/movies"
+          }
+        },
+        {
+          "name": "Filter Movies By Genre",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/movies?genre={{genreId}}"
+          }
+        },
+        {
+          "name": "Filter Movies By Year",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/movies?year=2014"
+          }
+        },
+        {
+          "name": "Filter Movies By Actor",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/movies?actor={{actorId}}"
+          }
+        },
+        {
+          "name": "Search Movies By Title",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/movies/search?title=Inception"
+          }
+        },
+        {
+          "name": "Get One Movie",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/movies/{{movieId}}"
+          }
+        },
+        {
+          "name": "Create Movie",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"The Matrix\",\n  \"releaseyear\": 1999,\n  \"duration\": 136,\n  \"actorids\": [1, 2, 3],\n  \"genreids\": [1, 2]\n}"
+            },
+            "url": "{{baseUrl}}/api/movies"
+          }
+        },
+        {
+          "name": "Patch Movie - Add And Remove Actors",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"addActorIds\": [2, 3, 5],\n\"removeActorIds\": [1, 10]\n}"
+            },
+            "url": "{{baseUrl}}/api/movies/{{movieId}}"
+          }
+        },
+        {
+          "name": "Patch Movie - Update Title Only",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"The Matrix Updated\"\n}"
+            },
+            "url": "{{baseUrl}}/api/movies/{{movieId}}"
+          }
+        },
+        {
+          "name": "Delete Movie",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/movies/{{movieId}}"
+          }
+        }
+      ]
+    }
+  ]
+}

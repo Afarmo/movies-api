@@ -38,14 +38,15 @@ The SQLite database is created by the application and is not included in the rep
 
 Sample data can be loaded using the provided `seed.sql` file:
 
-```bash
-sqlite3 movieapi.db < seed.sql
-```
-
 Start the API:
 
 ```bash
 go run ./cmd
+```
+Open a new terminal and run:
+
+```bash
+sqlite3 movieapi.db < seed.sql
 ```
 
 ---
