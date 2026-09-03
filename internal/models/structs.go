@@ -34,3 +34,11 @@ type ActorPatch struct {
 	Name      *string `json:"name"`
 	BirthDate *string `json:"birthdate"`
 }
+
+type MovieFilter struct {
+	GenreID *int64
+	ActorID *int64
+	Year    *int
+	Page    *int
+	Size    *int
+}
