@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"movies-api/internal/apperrors"
 	"movies-api/internal/models"
 	"movies-api/internal/service"
@@ -141,8 +140,7 @@ func (h *MovieHandler) CreateMovieHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	if err := h.movieService.InsertMovie(req.Context(), &movie); err != nil {
-		fmt.Println(movie)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		apperrors.WriteError(w, err)
 		return
 	}
 

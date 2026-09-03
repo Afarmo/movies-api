@@ -22,20 +22,23 @@ func (r *MovieRepo) InsertMovie(ctx context.Context, movie *models.Movie) error 
 	if err != nil {
 		return err
 	}
-
 	defer tx.Rollback()
+
 	query := `
         INSERT INTO Movie (title, releaseYear, duration)
         VALUES (?, ?, ?)
     `
+
 	result, err := tx.ExecContext(ctx, query, movie.Title, movie.ReleaseYear, movie.Duration)
 	if err != nil {
 		return err
 	}
+
 	movieID, err := result.LastInsertId()
 	if err != nil {
 		return err
 	}
+
 	movie.ID = int(movieID)
 	for _, actorID := range movie.ActorIds {
 		_, err = tx.ExecContext(
@@ -47,9 +50,13 @@ func (r *MovieRepo) InsertMovie(ctx context.Context, movie *models.Movie) error 
 		)
 
 		if err != nil {
+			if isForeignKeyError(err) {
+				return apperrors.ErrInvalidInput
+			}
 			return err
 		}
 	}
+
 	for _, genreID := range movie.GenreIds {
 		_, err = tx.ExecContext(
 			ctx,
@@ -60,6 +67,9 @@ func (r *MovieRepo) InsertMovie(ctx context.Context, movie *models.Movie) error 
 		)
 
 		if err != nil {
+			if isForeignKeyError(err) {
+				return apperrors.ErrInvalidInput
+			}
 			return err
 		}
 	}
@@ -497,4 +507,8 @@ func (r *MovieRepo) SearchMovies(ctx context.Context, name string) ([]*models.Mo
 	}
 
 	return movies, nil
+}
+
+func isForeignKeyError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "FOREIGN KEY constraint failed")
 }
