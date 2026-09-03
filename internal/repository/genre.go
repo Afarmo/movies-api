@@ -3,7 +3,10 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"movies-api/internal/apperrors"
 	"movies-api/internal/models"
+	"strings"
 )
 
 type GenreRepo struct {
@@ -15,13 +18,12 @@ func NewGenreRepo(db *sql.DB) *GenreRepo {
 }
 
 func (r *GenreRepo) InsertGenre(ctx context.Context, genre *models.Genre) error {
-
 	query := "INSERT INTO Genre (name) VALUES(?)"
-	result, err := r.db.ExecContext(ctx, query, genre.Name)
 
+	result, err := r.db.ExecContext(ctx, query, genre.Name)
 	if err != nil {
 		if isUniqueConstraintError(err) {
-			return ErrDuplicateID
+			return apperrors.ErrConflict
 		}
 		return err
 	}
@@ -31,8 +33,8 @@ func (r *GenreRepo) InsertGenre(ctx context.Context, genre *models.Genre) error 
 		return nil
 	}
 	genre.ID = int(id)
-	return nil
 
+	return nil
 }
 
 func (r *GenreRepo) UpdateGenre(ctx context.Context, genre *models.Genre) error {
@@ -40,6 +42,9 @@ func (r *GenreRepo) UpdateGenre(ctx context.Context, genre *models.Genre) error 
 
 	result, err := r.db.ExecContext(ctx, query, genre.Name, genre.ID)
 	if err != nil {
+		if isUniqueConstraintError(err) {
+			return apperrors.ErrConflict
+		}
 		return err
 	}
 
@@ -48,10 +53,10 @@ func (r *GenreRepo) UpdateGenre(ctx context.Context, genre *models.Genre) error 
 		return err
 	}
 	if rowsAffected == 0 {
-		return ErrNotFound
+		return apperrors.ErrNotFound
 	}
-	return nil
 
+	return nil
 }
 
 func (r *GenreRepo) DeleteGenre(ctx context.Context, id int64) error {
@@ -67,7 +72,7 @@ func (r *GenreRepo) DeleteGenre(ctx context.Context, id int64) error {
 		return err
 	}
 	if rowsAffected == 0 {
-		return ErrNotFound
+		return apperrors.ErrNotFound
 	}
 
 	return nil
@@ -102,8 +107,17 @@ func (r *GenreRepo) ListOneGenre(ctx context.Context, id int64) (*models.Genre, 
 
 	genre := &models.Genre{}
 	if err := r.db.QueryRowContext(ctx, query, id).Scan(&genre.ID, &genre.Name); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperrors.ErrNotFound
+		}
 		return nil, err
 	}
 
 	return genre, nil
+}
+
+func isUniqueConstraintError(err error) bool {
+	// SQLite error message contains "UNIQUE constraint failed"
+	return err != nil && (strings.Contains(err.Error(), "UNIQUE constraint failed") ||
+		strings.Contains(err.Error(), "unique constraint"))
 }
