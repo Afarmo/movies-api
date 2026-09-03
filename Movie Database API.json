@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "9f8c1c7e-2b14-4a53-9d5f-7e4b2c1a6d90",
-    "name": "Movies API - Full Test Collection",
+    "name": "Movies Database API",
     "description": "Collection for testing the Movies API actors, genres, movies, searches, filters, relationships, CRUD operations, and PATCH updates.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
