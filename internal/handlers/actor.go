@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"movies-api/internal/apperrors"
 	"movies-api/internal/models"
 	"movies-api/internal/service"
@@ -179,7 +178,6 @@ func (h *ActorHandler) GetActorsByMovie(w http.ResponseWriter, req *http.Request
 
 	actors, err := h.actorService.ActorsByMovie(req.Context(), movieId)
 	if err != nil {
-		fmt.Println(">>>", err)
 		apperrors.WriteError(w, err)
 		return
 	}

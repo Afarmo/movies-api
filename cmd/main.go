@@ -54,7 +54,7 @@ func main() {
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Println("\033[31m[PANIC]\033[0m Server error:", err)
+			log.Println("\033[31m  [PANIC]\033[0m    Server error:", err)
 		}
 	}()
 

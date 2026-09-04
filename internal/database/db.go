@@ -43,6 +43,8 @@ CREATE TABLE IF NOT EXISTS Movie_Actors (
 ); 
 `
 
+// NewDataBase opens a connection to the SQLite database and enables
+// foreign key constraint enforcement.
 func NewDataBase(dbName string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", dbName)
 	if err != nil {
@@ -61,6 +63,7 @@ func NewDataBase(dbName string) (*sql.DB, error) {
 	return db, nil
 }
 
+// InitializeQuery creates the database tables using the defined schema.
 func InitializeQuery(db *sql.DB) error {
 	_, err := db.Exec(schema)
 	return err
