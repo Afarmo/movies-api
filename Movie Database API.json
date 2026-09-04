@@ -167,6 +167,14 @@
             "header": [],
             "url": "{{baseUrl}}/api/genres/{{genreId}}"
           }
+        },
+        {
+          "name": "Delete Genre - Force",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/genres/{{genreId}}?force=true"
+          }
         }
       ]
     },
