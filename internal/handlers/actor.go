@@ -155,8 +155,9 @@ func (h *ActorHandler) UpdateActorHandler(w http.ResponseWriter, req *http.Reque
 func (h *ActorHandler) SearchActorsHandler(w http.ResponseWriter, req *http.Request) {
 	name := req.URL.Query().Get("name")
 
-	if name != "" {
+	if name == "" {
 		http.Error(w, "Name is required", http.StatusBadRequest)
+		return
 	}
 
 	actors, err := h.actorService.SearchActors(req.Context(), name)
